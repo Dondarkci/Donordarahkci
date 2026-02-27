@@ -63,6 +63,12 @@ export default function RegistrationForm() {
       return;
     }
 
+    const selectedLoc = locations?.find(l => l.id === values.eventSlotId);
+    if (!selectedLoc) {
+      toast({ title: "Lokasi tidak valid", description: "Silakan pilih lokasi kembali.", variant: "destructive" });
+      return;
+    }
+
     const remaining = getQuotaRemaining(values.eventSlotId);
     if (remaining <= 0) {
       toast({ title: "Kuota Penuh", description: "Maaf, kuota untuk lokasi ini sudah habis.", variant: "destructive" });
@@ -70,33 +76,35 @@ export default function RegistrationForm() {
     }
 
     try {
-      const selectedLoc = locations?.find(l => l.id === values.eventSlotId);
       const registrationId = doc(collection(db, "temp")).id;
       const regPath = `users/${user.uid}/registrations/${registrationId}`;
       
+      // Pastikan tidak ada nilai undefined yang dikirim ke Firestore
       const regData = {
         id: registrationId,
-        ...values,
-        locationName: selectedLoc?.locationName,
-        locationDate: selectedLoc?.eventDate,
+        fullName: values.fullName,
+        nik: values.nik,
+        email: values.email,
+        eventSlotId: values.eventSlotId,
+        locationName: selectedLoc.locationName || "Lokasi Tidak Diketahui",
+        locationDate: selectedLoc.eventDate || "Tanggal Tidak Diketahui",
         registrationDate: serverTimestamp(),
         githubUserId: user.uid,
       };
 
-      // 1. Simpan ke Firebase
+      // 1. Simpan ke Firebase (Operasi Utama)
       await setDoc(doc(db, regPath), regData);
       
-      // Update quota
+      // 2. Update kuota (Operasi Pendukung - dibungkus agar tidak menggagalkan pendaftaran)
       try {
         await updateDoc(doc(db, "eventSlots", values.eventSlotId), { 
           currentRegistrations: increment(1) 
         });
       } catch (quotaError) {
         console.error("Gagal update kuota:", quotaError);
-        // Tetap lanjut karena data pendaftaran sudah masuk
       }
 
-      // 2. Kirim Email Konfirmasi melalui API
+      // 3. Kirim Email Konfirmasi (Operasi Pendukung)
       try {
         await fetch('/api/send-email', {
           method: 'POST',
@@ -106,8 +114,8 @@ export default function RegistrationForm() {
           body: JSON.stringify({
             email: values.email,
             nama: values.fullName,
-            lokasi: selectedLoc?.locationName,
-            tanggal: selectedLoc?.eventDate,
+            lokasi: selectedLoc.locationName,
+            tanggal: selectedLoc.eventDate,
           }),
         });
       } catch (emailError) {
@@ -119,7 +127,11 @@ export default function RegistrationForm() {
       form.reset();
     } catch (error) {
       console.error("Registration error:", error);
-      toast({ title: "Gagal Mendaftar", description: "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.", variant: "destructive" });
+      toast({ 
+        title: "Gagal Mendaftar", 
+        description: "Terjadi kesalahan sistem. Jika data Anda sudah masuk menurut Admin, silakan abaikan pesan ini.", 
+        variant: "destructive" 
+      });
     }
   }
 

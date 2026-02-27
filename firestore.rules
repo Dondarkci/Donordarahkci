@@ -18,10 +18,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Event Slots (Kuota Lokasi): Public read, Signed-in update (quota), Admin full access
+    // Event Slots (Kuota Lokasi): Public read, Public update (increment quota), Admin full access
     match /eventSlots/{slotId} {
       allow read: if true;
-      allow update: if isSignedIn();
+      allow update: if true; // Mengizinkan update untuk counter kuota bagi semua pendaftar
       allow create, delete: if isAdmin();
     }
 
