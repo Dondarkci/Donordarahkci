@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-blood-drive",
+      "description": "KCI Blood Drive Hero",
+      "imageUrl": "https://picsum.photos/seed/kci-blood/1200/600",
+      "imageHint": "blood donation railway"
+    },
+    {
+      "id": "logo-kci",
+      "description": "KCI Logo Placeholder",
+      "imageUrl": "https://picsum.photos/seed/kci-logo/200/200",
+      "imageHint": "train logo"
+    }
+  ]
+}

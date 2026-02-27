@@ -1,0 +1,52 @@
+
+{
+  "entities": {
+    "BloodDriveOption": {
+      "title": "BloodDriveOption",
+      "description": "Lokasi dan jadwal event donor darah.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "locationName": { "type": "string" },
+        "eventDate": { "type": "string", "format": "date" },
+        "maxQuota": { "type": "number" },
+        "currentRegistrations": { "type": "number" }
+      },
+      "required": ["id", "locationName", "eventDate", "maxQuota", "currentRegistrations"]
+    },
+    "ParticipantRegistration": {
+      "title": "ParticipantRegistration",
+      "description": "Data pendaftaran peserta donor darah.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "nik": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "eventSlotId": { "type": "string" },
+        "registrationDate": { "type": "object" },
+        "githubUserId": { "type": "string" },
+        "locationName": { "type": "string" },
+        "locationDate": { "type": "string" }
+      },
+      "required": ["id", "fullName", "nik", "whatsappNumber", "eventSlotId", "githubUserId"]
+    }
+  },
+  "auth": {
+    "providers": ["anonymous"]
+  },
+  "firestore": {
+    "/eventSlots/{slotId}": {
+      "schema": "BloodDriveOption",
+      "description": "Koleksi publik lokasi donor darah (sebelumnya bloodDriveOptions)."
+    },
+    "/users/{userId}/registrations/{registrationId}": {
+      "schema": "ParticipantRegistration",
+      "description": "Data pendaftaran milik masing-masing user."
+    },
+    "/roles_admin/{userId}": {
+      "schema": "object",
+      "description": "Daftar admin untuk akses dashboard."
+    }
+  }
+}
