@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase";
 
 export const metadata: Metadata = {
-  title: 'KCI Blood Drive Registration',
+  title: 'Donor Darah PT KCI',
   description: 'Donor Darah PT. Kereta Commuter Indonesia',
 };
 
