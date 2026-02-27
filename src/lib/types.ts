@@ -7,14 +7,17 @@ export type LocationOption = {
   currentRegistrations: number;
 };
 
-export type Registration = {
+export type ParticipantRegistration = {
   id: string;
   fullName: string;
   nik: string;
-  whatsappNumber: string;
+  email: string;
   eventSlotId: string;
   registrationDate: any;
   githubUserId: string;
   locationName?: string;
   locationDate?: string;
 };
+
+// Alias for backward compatibility if needed in some components
+export type Registration = ParticipantRegistration;

@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationOption } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Droplet, Check, X } from "lucide-react";
+import { MapPin, Droplet, Check, X, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, updateDoc, increment, serverTimestamp, setDoc } from "firebase/firestore";
@@ -21,9 +21,7 @@ import { signInAnonymously } from "firebase/auth";
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
   nik: z.string().length(16, { message: "NIK harus 16 digit" }),
-  whatsappNumber: z.string()
-    .min(10, { message: "Nomor WhatsApp tidak valid" })
-    .regex(/^62/, { message: "Nomor harus diawali dengan 62" }),
+  email: z.string().email({ message: "Email tidak valid" }),
   eventSlotId: z.string({ required_error: "Silakan pilih lokasi dan tanggal" }),
 });
 
@@ -48,7 +46,7 @@ export default function RegistrationForm() {
     defaultValues: {
       fullName: "",
       nik: "",
-      whatsappNumber: "62",
+      email: "",
       eventSlotId: "",
     },
   });
@@ -85,18 +83,6 @@ export default function RegistrationForm() {
       await setDoc(doc(db, regPath), regData);
       await updateDoc(doc(db, "eventSlots", values.eventSlotId), { currentRegistrations: increment(1) });
 
-      // Trigger WhatsApp API (Optional background process)
-      fetch("/api/send-wa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nama: values.fullName,
-          nohp: values.whatsappNumber,
-          lokasi: selectedLoc?.locationName,
-          tanggal: selectedLoc?.eventDate,
-        }),
-      }).catch(console.error);
-
       setLastEntry(regData);
       setSubmitted(true);
       form.reset();
@@ -121,7 +107,7 @@ export default function RegistrationForm() {
           </div>
           <div className="text-center space-y-3 mb-8">
             <h2 className="text-[32px] font-bold text-[#2D241E] font-headline">Pendaftaran Berhasil</h2>
-            <p className="text-[#80766E] font-body">Konfirmasi pendaftaran telah dikirim ke WhatsApp Anda.</p>
+            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan.</p>
           </div>
           <Button onClick={() => setSubmitted(false)} className="w-full h-[64px] bg-primary text-white rounded-[20px] text-xl font-bold">
             Selesai
@@ -152,10 +138,15 @@ export default function RegistrationForm() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="whatsappNumber" render={({ field }) => (
+                <FormField control={form.control} name="email" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#80766E]">No WhatsApp (Diawali 62)</FormLabel>
-                    <FormControl><Input placeholder="628..." {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl" /></FormControl>
+                    <FormLabel className="text-[#80766E]">Alamat Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
+                        <Input placeholder="email@contoh.com" type="email" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl pl-12" />
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

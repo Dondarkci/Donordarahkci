@@ -87,11 +87,11 @@ export default function AdminPage() {
       return;
     }
 
-    const headers = ["Nama Lengkap", "NIK", "WhatsApp", "Lokasi", "Tanggal", "Waktu Daftar"];
+    const headers = ["Nama Lengkap", "NIK", "Email", "Lokasi", "Tanggal", "Waktu Daftar"];
     const rows = registrations.map(r => [
       r.fullName,
       `'${r.nik}`,
-      r.whatsappNumber,
+      r.email,
       r.locationName || "",
       r.locationDate || "",
       r.registrationDate ? new Date(r.registrationDate.seconds * 1000).toLocaleString('id-ID') : ""
@@ -125,7 +125,8 @@ export default function AdminPage() {
 
   const filteredData = registrations?.filter(r => 
     r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.nik.includes(searchQuery)
+    r.nik.includes(searchQuery) ||
+    r.email.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
   return (
@@ -213,7 +214,7 @@ export default function AdminPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative flex-1 max-w-[900px]">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
-              <Input placeholder="Cari nama atau NIK..." className="pl-14 h-14 bg-[#F8F7F4] border-none rounded-2xl text-base" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <Input placeholder="Cari nama, NIK, atau email..." className="pl-14 h-14 bg-[#F8F7F4] border-none rounded-2xl text-base" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <div className="bg-white border border-[#E5E7EB] rounded-full px-6 py-2.5 shadow-sm">
               <span className="font-bold text-base text-[#2D241E]">Total: {filteredData.length} Orang</span>
@@ -226,7 +227,7 @@ export default function AdminPage() {
                 <TableRow>
                   <TableHead>Nama Lengkap</TableHead>
                   <TableHead>NIK</TableHead>
-                  <TableHead>WhatsApp</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Lokasi</TableHead>
                   <TableHead className="text-right">Waktu Daftar</TableHead>
                 </TableRow>
@@ -239,7 +240,7 @@ export default function AdminPage() {
                     <TableRow key={reg.id}>
                       <TableCell className="font-bold">{reg.fullName}</TableCell>
                       <TableCell className="font-bold">{reg.nik}</TableCell>
-                      <TableCell>{reg.whatsappNumber}</TableCell>
+                      <TableCell>{reg.email}</TableCell>
                       <TableCell className="font-bold">{reg.locationName}</TableCell>
                       <TableCell className="text-right text-[#A09891] text-sm">
                         {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
