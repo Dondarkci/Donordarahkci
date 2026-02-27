@@ -8,28 +8,30 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        request.auth.token.email == 'ronymunich@gmail.com' ||
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
+      );
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Event Slots (Kuota Lokasi): Public read, any signed-in user can write (seed/edit) for prototype
+    // Event Slots (Kuota Lokasi): Public read, Admin write
     match /eventSlots/{slotId} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    // User Registrations: Owner read/write, any signed-in user can read/write for prototype dashboard
+    // User Registrations: Owner read/write, Admin read/write
     match /users/{userId}/registrations/{registrationId} {
-      allow read, write: if isOwner(userId) || isSignedIn();
+      allow read, write: if isOwner(userId) || isAdmin();
     }
     
     // Support collectionGroup queries for the Admin Dashboard
-    // Dilonggarkan ke isSignedIn agar dashboard prototype dapat menampilkan data
     match /{path=**}/registrations/{registrationId} {
-      allow list: if isSignedIn();
+      allow list: if isAdmin();
     }
 
     // Admin Roles

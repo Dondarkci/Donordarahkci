@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -15,33 +15,54 @@ import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp } from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 export default function AdminPage() {
   const db = useFirestore();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Login states
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const [editingLoc, setEditingLoc] = useState<LocationOption | null>(null);
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
 
-  useEffect(() => {
-    if (auth && !auth.currentUser) {
-      signInAnonymously(auth).catch(console.error);
-    }
-  }, [auth]);
-
   const regsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || user.email !== "ronymunich@gmail.com") return null;
     return collectionGroup(db, "registrations");
   }, [db, user]);
   const { data: registrations, isLoading: isRegsLoading } = useCollection<Registration>(regsQuery);
 
   const slotsQuery = useMemoFirebase(() => collection(db, "eventSlots"), [db]);
   const { data: locations, isLoading: isLocsLoading } = useCollection<LocationOption>(slotsQuery);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      toast({ title: "Berhasil Masuk", description: "Selamat datang kembali, Admin." });
+    } catch (error: any) {
+      toast({ 
+        title: "Login Gagal", 
+        description: "Email atau password salah, atau Anda tidak memiliki akses.",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    toast({ title: "Berhasil Keluar" });
+  };
 
   const handleSeedData = async () => {
     try {
@@ -129,13 +150,86 @@ export default function AdminPage() {
     r.email.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Droplet className="h-12 w-12 text-primary animate-bounce mx-auto fill-primary" />
+          <p className="font-bold text-[#8B4513]">Memeriksa Otoritas Admin...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.email !== "ronymunich@gmail.com") {
+    return (
+      <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center p-6">
+        <Card className="max-w-md w-full p-8 rounded-[40px] border-none shadow-2xl bg-white space-y-8">
+          <div className="text-center space-y-3">
+            <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-primary">
+              <Lock className="h-10 w-10" />
+            </div>
+            <h1 className="text-3xl font-headline font-bold text-[#2D241E]">Admin Login</h1>
+            <p className="text-[#80766E] font-body text-base">Halaman ini hanya untuk admin terdaftar.</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div className="space-y-2">
+              <Label className="font-bold text-[#2D241E]">Email Admin</Label>
+              <Input 
+                type="email" 
+                placeholder="admin@email.com" 
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="h-14 bg-[#F8F7F4] border-none rounded-2xl" 
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-bold text-[#2D241E]">Password</Label>
+              <Input 
+                type="password" 
+                placeholder="••••••••" 
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="h-14 bg-[#F8F7F4] border-none rounded-2xl" 
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              disabled={isLoggingIn}
+              className="w-full h-14 bg-primary text-white rounded-2xl text-lg font-bold shadow-lg shadow-primary/20"
+            >
+              {isLoggingIn ? "Memproses..." : "Masuk Sekarang"}
+            </Button>
+            <Link href="/" className="block">
+              <Button variant="ghost" className="w-full h-12 rounded-2xl text-[#80766E]">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Kembali ke Beranda
+              </Button>
+            </Link>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 space-y-8 font-body">
-      <div className="flex items-center gap-4 text-[#8B4513] mb-2">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm font-bold border-r border-[#8B4513]/20 pr-4">Ke Pendaftaran</span>
-        </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 text-[#8B4513]">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="text-sm font-bold border-r border-[#8B4513]/20 pr-4">Ke Pendaftaran</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">{user.email} (Online)</span>
+          </div>
+        </div>
+        <Button onClick={handleLogout} variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-2 font-bold">
+          <LogOut className="h-4 w-4" /> Keluar
+        </Button>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -146,7 +240,7 @@ export default function AdminPage() {
           </div>
           <p className="text-[#80766E] text-lg">Monitoring pendaftaran donor darah PT. KCI</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button onClick={handleSeedData} className="bg-blue-600 hover:bg-blue-700 text-white gap-2 h-12 rounded-xl px-5 font-bold shadow-sm">
             <PlusCircle className="h-4 w-4" /> Seed Lokasi
           </Button>
@@ -170,7 +264,7 @@ export default function AdminPage() {
           </AlertDialog>
 
           <Button onClick={downloadExcel} className="bg-[#3A7E49] hover:bg-[#2F663B] text-white gap-2 h-12 rounded-xl px-6 font-bold shadow-sm">
-            <Download className="h-4 w-4" /> Download Excel
+            <Download className="h-4 w-4" /> Download CSV
           </Button>
         </div>
       </div>
@@ -233,7 +327,9 @@ export default function AdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.length === 0 ? (
+                {isRegsLoading ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
+                ) : filteredData.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
                   filteredData.map((reg) => (
