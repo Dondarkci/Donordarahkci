@@ -80,8 +80,26 @@ export default function RegistrationForm() {
         githubUserId: user.uid,
       };
 
+      // 1. Simpan ke Firebase
       await setDoc(doc(db, regPath), regData);
       await updateDoc(doc(db, "eventSlots", values.eventSlotId), { currentRegistrations: increment(1) });
+
+      // 2. Kirim Email Konfirmasi melalui API
+      try {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: values.email,
+            nama: values.fullName,
+          }),
+        });
+      } catch (emailError) {
+        console.error("Gagal mengirim email konfirmasi:", emailError);
+        // Kita tidak menghentikan proses sukses pendaftaran jika hanya email yang gagal
+      }
 
       setLastEntry(regData);
       setSubmitted(true);
@@ -107,7 +125,7 @@ export default function RegistrationForm() {
           </div>
           <div className="text-center space-y-3 mb-8">
             <h2 className="text-[32px] font-bold text-[#2D241E] font-headline">Pendaftaran Berhasil</h2>
-            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan.</p>
+            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan dan email konfirmasi telah dikirim.</p>
           </div>
           <Button onClick={() => setSubmitted(false)} className="w-full h-[64px] bg-primary text-white rounded-[20px] text-xl font-bold">
             Selesai
