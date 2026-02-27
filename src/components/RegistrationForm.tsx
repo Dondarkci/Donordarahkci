@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -57,11 +58,14 @@ export default function RegistrationForm() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) return;
+    if (!user) {
+      toast({ title: "Sesi tidak valid", description: "Mohon tunggu sebentar atau muat ulang halaman.", variant: "destructive" });
+      return;
+    }
 
     const remaining = getQuotaRemaining(values.eventSlotId);
     if (remaining <= 0) {
-      toast({ title: "Kuota Penuh", variant: "destructive" });
+      toast({ title: "Kuota Penuh", description: "Maaf, kuota untuk lokasi ini sudah habis.", variant: "destructive" });
       return;
     }
 
@@ -81,9 +85,18 @@ export default function RegistrationForm() {
 
       // 1. Simpan ke Firebase
       await setDoc(doc(db, regPath), regData);
-      await updateDoc(doc(db, "eventSlots", values.eventSlotId), { currentRegistrations: increment(1) });
+      
+      // Update quota
+      try {
+        await updateDoc(doc(db, "eventSlots", values.eventSlotId), { 
+          currentRegistrations: increment(1) 
+        });
+      } catch (quotaError) {
+        console.error("Gagal update kuota:", quotaError);
+        // Tetap lanjut karena data pendaftaran sudah masuk
+      }
 
-      // 2. Kirim Email Konfirmasi melalui API dengan detail lokasi & tanggal
+      // 2. Kirim Email Konfirmasi melalui API
       try {
         await fetch('/api/send-email', {
           method: 'POST',
@@ -105,7 +118,8 @@ export default function RegistrationForm() {
       setSubmitted(true);
       form.reset();
     } catch (error) {
-      toast({ title: "Gagal Mendaftar", variant: "destructive" });
+      console.error("Registration error:", error);
+      toast({ title: "Gagal Mendaftar", description: "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.", variant: "destructive" });
     }
   }
 
@@ -125,7 +139,7 @@ export default function RegistrationForm() {
           </div>
           <div className="text-center space-y-3 mb-8">
             <h2 className="text-[32px] font-bold text-[#2D241E] font-headline">Pendaftaran Berhasil</h2>
-            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan dan email konfirmasi telah dikirim.</p>
+            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan dan email konfirmasi sedang dikirim.</p>
           </div>
           <Button onClick={() => setSubmitted(false)} className="w-full h-[64px] bg-primary text-white rounded-[20px] text-xl font-bold">
             Selesai
