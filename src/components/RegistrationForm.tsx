@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -84,7 +83,7 @@ export default function RegistrationForm() {
       await setDoc(doc(db, regPath), regData);
       await updateDoc(doc(db, "eventSlots", values.eventSlotId), { currentRegistrations: increment(1) });
 
-      // 2. Kirim Email Konfirmasi melalui API
+      // 2. Kirim Email Konfirmasi melalui API dengan detail lokasi & tanggal
       try {
         await fetch('/api/send-email', {
           method: 'POST',
@@ -94,11 +93,12 @@ export default function RegistrationForm() {
           body: JSON.stringify({
             email: values.email,
             nama: values.fullName,
+            lokasi: selectedLoc?.locationName,
+            tanggal: selectedLoc?.eventDate,
           }),
         });
       } catch (emailError) {
         console.error("Gagal mengirim email konfirmasi:", emailError);
-        // Kita tidak menghentikan proses sukses pendaftaran jika hanya email yang gagal
       }
 
       setLastEntry(regData);
