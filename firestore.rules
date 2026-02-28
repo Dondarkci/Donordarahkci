@@ -21,7 +21,7 @@ service cloud.firestore {
     // Event Slots (Kuota Lokasi): Public read, Public update (increment quota), Admin full access
     match /eventSlots/{slotId} {
       allow read: if true;
-      allow update: if true; // Mengizinkan update untuk counter kuota bagi semua pendaftar
+      allow update: if true; // Mengizinkan update untuk counter kuota bagi semua pendaftar (termasuk anonim)
       allow create, delete: if isAdmin();
     }
 

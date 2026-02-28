@@ -15,8 +15,9 @@ import { toast } from "@/hooks/use-toast";
 import { MapPin, Droplet, Check, X, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, updateDoc, increment, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, doc, increment, serverTimestamp } from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
+import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
@@ -34,7 +35,9 @@ export default function RegistrationForm() {
 
   useEffect(() => {
     if (auth && !auth.currentUser) {
-      signInAnonymously(auth).catch(console.error);
+      signInAnonymously(auth).catch((err) => {
+        console.error("Anonymous sign-in failed:", err);
+      });
     }
   }, [auth]);
 
@@ -57,9 +60,13 @@ export default function RegistrationForm() {
     return Math.max((loc.maxQuota || 0) - (loc.currentRegistrations || 0), 0);
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
-      toast({ title: "Sesi tidak valid", description: "Mohon tunggu sebentar atau muat ulang halaman.", variant: "destructive" });
+      toast({ 
+        title: "Sesi tidak valid", 
+        description: "Mohon tunggu sebentar agar sistem dapat mengenali sesi Anda.", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -75,64 +82,49 @@ export default function RegistrationForm() {
       return;
     }
 
-    try {
-      const registrationId = doc(collection(db, "temp")).id;
-      const regPath = `users/${user.uid}/registrations/${registrationId}`;
-      
-      // Pastikan tidak ada nilai undefined yang dikirim ke Firestore
-      const regData = {
-        id: registrationId,
-        fullName: values.fullName,
-        nik: values.nik,
+    const registrationId = doc(collection(db, "temp")).id;
+    const regPath = `users/${user.uid}/registrations/${registrationId}`;
+    const regRef = doc(db, regPath);
+    
+    const regData = {
+      id: registrationId,
+      fullName: values.fullName,
+      nik: values.nik,
+      email: values.email,
+      eventSlotId: values.eventSlotId,
+      locationName: selectedLoc.locationName || "Lokasi Tidak Diketahui",
+      locationDate: selectedLoc.eventDate || "Tanggal Tidak Diketahui",
+      registrationDate: serverTimestamp(),
+      githubUserId: user.uid,
+    };
+
+    // 1. Simpan Data Pendaftaran (Non-blocking)
+    setDocumentNonBlocking(regRef, regData, { merge: true });
+    
+    // 2. Update Kuota di Lokasi Terkait (Non-blocking)
+    const slotRef = doc(db, "eventSlots", values.eventSlotId);
+    updateDocumentNonBlocking(slotRef, { 
+      currentRegistrations: increment(1) 
+    });
+
+    // 3. Kirim Email Konfirmasi (Background task)
+    fetch('/api/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         email: values.email,
-        eventSlotId: values.eventSlotId,
-        locationName: selectedLoc.locationName || "Lokasi Tidak Diketahui",
-        locationDate: selectedLoc.eventDate || "Tanggal Tidak Diketahui",
-        registrationDate: serverTimestamp(),
-        githubUserId: user.uid,
-      };
+        nama: values.fullName,
+        lokasi: selectedLoc.locationName,
+        tanggal: selectedLoc.eventDate,
+      }),
+    }).catch(err => console.error("Email send failed:", err));
 
-      // 1. Simpan ke Firebase (Operasi Utama)
-      await setDoc(doc(db, regPath), regData);
-      
-      // 2. Update kuota (Operasi Pendukung - dibungkus agar tidak menggagalkan pendaftaran)
-      try {
-        await updateDoc(doc(db, "eventSlots", values.eventSlotId), { 
-          currentRegistrations: increment(1) 
-        });
-      } catch (quotaError) {
-        console.error("Gagal update kuota:", quotaError);
-      }
-
-      // 3. Kirim Email Konfirmasi (Operasi Pendukung)
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: values.email,
-            nama: values.fullName,
-            lokasi: selectedLoc.locationName,
-            tanggal: selectedLoc.eventDate,
-          }),
-        });
-      } catch (emailError) {
-        console.error("Gagal mengirim email konfirmasi:", emailError);
-      }
-
-      setLastEntry(regData);
-      setSubmitted(true);
-      form.reset();
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({ 
-        title: "Gagal Mendaftar", 
-        description: "Terjadi kesalahan sistem. Jika data Anda sudah masuk menurut Admin, silakan abaikan pesan ini.", 
-        variant: "destructive" 
-      });
-    }
+    // Update UI secara optimis
+    setLastEntry(regData);
+    setSubmitted(true);
+    form.reset();
   }
 
   if (submitted && lastEntry) {
@@ -151,7 +143,7 @@ export default function RegistrationForm() {
           </div>
           <div className="text-center space-y-3 mb-8">
             <h2 className="text-[32px] font-bold text-[#2D241E] font-headline">Pendaftaran Berhasil</h2>
-            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan dan email konfirmasi sedang dikirim.</p>
+            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan dan kuota telah diperbarui secara otomatis.</p>
           </div>
           <Button onClick={() => setSubmitted(false)} className="w-full h-[64px] bg-primary text-white rounded-[20px] text-xl font-bold">
             Selesai
@@ -198,7 +190,7 @@ export default function RegistrationForm() {
 
               <div className="space-y-6">
                 <h3 className="text-2xl font-headline text-[#2D241E] font-bold">Lokasi dan Tanggal</h3>
-                {isLocLoading ? <p>Memuat...</p> : (
+                {isLocLoading ? <p>Memuat ketersediaan lokasi...</p> : (
                   <FormField control={form.control} name="eventSlotId" render={({ field }) => (
                     <FormItem>
                       <FormControl>
