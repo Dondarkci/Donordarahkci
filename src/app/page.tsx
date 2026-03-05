@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Droplet, TrainFront, ChevronRight } from "lucide-react";
+import { Droplet, ChevronRight } from "lucide-react";
 import RegistrationForm from "@/components/RegistrationForm";
 
 export default function Home() {
@@ -43,7 +43,6 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-20 text-center flex flex-col items-center space-y-5">
         <div className="flex items-center gap-4 text-[#80766E]/70">
-          <TrainFront className="h-8 w-8" />
           <span className="text-2xl font-bold font-headline tracking-widest uppercase">KAI Commuter</span>
         </div>
         <p className="text-sm text-[#80766E]/50 font-body">
