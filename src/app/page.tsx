@@ -9,11 +9,6 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-[#FAF9F6]">
       {/* Header Section */}
       <header className="bg-primary relative overflow-hidden py-16 md:py-24 text-white text-center shadow-lg">
-        {/* Train Watermark */}
-        <div className="absolute right-[-40px] top-1/2 -translate-y-1/2 opacity-10 pointer-events-none">
-          <TrainFront className="h-72 w-72" />
-        </div>
-        
         <div className="relative z-10 max-w-4xl mx-auto px-4 flex flex-col items-center">
           {/* Droplet Icon in White Box */}
           <div className="bg-white rounded-[32px] p-8 mb-10 shadow-xl animate-in fade-in zoom-in duration-1000">
