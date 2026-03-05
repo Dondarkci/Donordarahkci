@@ -163,7 +163,7 @@ export default function RegistrationForm() {
                 <FormField control={form.control} name="fullName" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[#80766E]">Nama Lengkap</FormLabel>
-                    <FormControl><Input placeholder="Contoh: Roni Algifari" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl" /></FormControl>
+                    <FormControl><Input placeholder="Contoh: Arlon Algifari" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
