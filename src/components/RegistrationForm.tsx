@@ -186,27 +186,29 @@ export default function RegistrationForm() {
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem className="space-y-3">
+                  <FormItem className="space-y-2">
                     <FormLabel className="text-[#80766E]">Kategori</FormLabel>
                     <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-row space-x-4"
-                      >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Internal" className="h-6 w-6" />
-                          </FormControl>
-                          <FormLabel className="font-normal text-lg cursor-pointer">Internal</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Umum" className="h-6 w-6" />
-                          </FormControl>
-                          <FormLabel className="font-normal text-lg cursor-pointer">Umum</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
+                      <div className="h-14 bg-[#F5F3EF] border-none rounded-2xl flex items-center px-6">
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-row space-x-8"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Internal" className="h-5 w-5 border-primary text-primary" />
+                            </FormControl>
+                            <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Internal</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="Umum" className="h-5 w-5 border-primary text-primary" />
+                            </FormControl>
+                            <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Umum</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
