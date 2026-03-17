@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -108,11 +108,12 @@ export default function AdminPage() {
       return;
     }
 
-    const headers = ["Nama Lengkap", "NIK", "Email", "Lokasi", "Tanggal", "Waktu Daftar"];
+    const headers = ["Nama Lengkap", "NIK", "Email", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
     const rows = registrations.map(r => [
       r.fullName,
       `'${r.nik}`,
       r.email,
+      r.category,
       r.locationName || "",
       r.locationDate || "",
       r.registrationDate ? new Date(r.registrationDate.seconds * 1000).toLocaleString('id-ID') : ""
@@ -147,7 +148,8 @@ export default function AdminPage() {
   const filteredData = registrations?.filter(r => 
     r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.nik.includes(searchQuery) ||
-    r.email.toLowerCase().includes(searchQuery.toLowerCase())
+    r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.category?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
   if (isUserLoading) {
@@ -322,21 +324,27 @@ export default function AdminPage() {
                   <TableHead>Nama Lengkap</TableHead>
                   <TableHead>NIK</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Kategori</TableHead>
                   <TableHead>Lokasi</TableHead>
                   <TableHead className="text-right">Waktu Daftar</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isRegsLoading ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
                 ) : filteredData.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
                   filteredData.map((reg) => (
                     <TableRow key={reg.id}>
                       <TableCell className="font-bold">{reg.fullName}</TableCell>
                       <TableCell className="font-bold">{reg.nik}</TableCell>
                       <TableCell>{reg.email}</TableCell>
+                      <TableCell>
+                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold", reg.category === "Internal" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
+                          {reg.category}
+                        </span>
+                      </TableCell>
                       <TableCell className="font-bold">{reg.locationName}</TableCell>
                       <TableCell className="text-right text-[#A09891] text-sm">
                         {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}

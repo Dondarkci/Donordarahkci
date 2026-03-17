@@ -12,6 +12,7 @@ export type ParticipantRegistration = {
   fullName: string;
   nik: string;
   email: string;
+  category: string;
   eventSlotId: string;
   registrationDate: any;
   githubUserId: string;

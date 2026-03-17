@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationOption } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Droplet, Check, X, Mail } from "lucide-react";
+import { MapPin, Droplet, Check, X, Mail, User2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, increment, serverTimestamp } from "firebase/firestore";
@@ -23,6 +23,7 @@ const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
   nik: z.string().length(16, { message: "NIK harus 16 digit" }),
   email: z.string().email({ message: "Email tidak valid" }),
+  category: z.enum(["Internal", "Umum"], { required_error: "Pilih kategori peserta" }),
   eventSlotId: z.string({ required_error: "Silakan pilih lokasi dan tanggal" }),
 });
 
@@ -50,6 +51,7 @@ export default function RegistrationForm() {
       fullName: "",
       nik: "",
       email: "",
+      category: "Umum",
       eventSlotId: "",
     },
   });
@@ -91,6 +93,7 @@ export default function RegistrationForm() {
       fullName: values.fullName,
       nik: values.nik,
       email: values.email,
+      category: values.category,
       eventSlotId: values.eventSlotId,
       locationName: selectedLoc.locationName || "Lokasi Tidak Diketahui",
       locationDate: selectedLoc.eventDate || "Tanggal Tidak Diketahui",
@@ -98,16 +101,13 @@ export default function RegistrationForm() {
       githubUserId: user.uid,
     };
 
-    // 1. Simpan Data Pendaftaran (Non-blocking)
     setDocumentNonBlocking(regRef, regData, { merge: true });
     
-    // 2. Update Kuota di Lokasi Terkait (Non-blocking)
     const slotRef = doc(db, "eventSlots", values.eventSlotId);
     updateDocumentNonBlocking(slotRef, { 
       currentRegistrations: increment(1) 
     });
 
-    // 3. Kirim Email Konfirmasi (Background task)
     fetch('/api/send-email', {
       method: 'POST',
       headers: {
@@ -121,7 +121,6 @@ export default function RegistrationForm() {
       }),
     }).catch(err => console.error("Email send failed:", err));
 
-    // Update UI secara optimis
     setLastEntry(regData);
     setSubmitted(true);
     form.reset();
@@ -182,6 +181,32 @@ export default function RegistrationForm() {
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
                         <Input placeholder="email@contoh.com" type="email" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl pl-12" />
                       </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="category" render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-[#80766E]">Kategori</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-row space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Internal" className="h-6 w-6" />
+                          </FormControl>
+                          <FormLabel className="font-normal text-lg cursor-pointer">Internal</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Umum" className="h-6 w-6" />
+                          </FormControl>
+                          <FormLabel className="font-normal text-lg cursor-pointer">Umum</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

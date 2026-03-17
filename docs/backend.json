@@ -23,13 +23,14 @@
         "fullName": { "type": "string" },
         "nik": { "type": "string" },
         "email": { "type": "string", "format": "email" },
+        "category": { "type": "string", "enum": ["Internal", "Umum"] },
         "eventSlotId": { "type": "string" },
         "registrationDate": { "type": "object" },
         "githubUserId": { "type": "string" },
         "locationName": { "type": "string" },
         "locationDate": { "type": "string" }
       },
-      "required": ["id", "fullName", "nik", "email", "eventSlotId", "githubUserId"]
+      "required": ["id", "fullName", "nik", "email", "category", "eventSlotId", "githubUserId"]
     }
   },
   "auth": {
