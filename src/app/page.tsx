@@ -32,10 +32,10 @@ export default function Home() {
             Hallo Insan KAI Commuter <ChevronRight className="h-8 w-8 text-primary/30" />
           </h2>
           <div className="space-y-4">
-            <p className="text-lg md:text-xl text-[#80766E] font-normal leading-relaxed max-w-4xl">
+            <p className="text-lg md:text-xl text-[#80766E] font-normal leading-relaxed w-full">
               Silahkan isi formulir berikut dengan data yang benar untuk mengikuti kegiatan donor darah. Pastikan anda memilih Lokasi dan Tanggal sesuai ketersediaan.
             </p>
-            <p className="text-lg md:text-xl text-[#80766E] font-normal leading-relaxed max-w-4xl">
+            <p className="text-lg md:text-xl text-[#80766E] font-normal leading-relaxed w-full">
               Pastikan anda dalam kondisi sehat jasmani dan rohani, tidak sedang mengkonsumsi obat-batan dan antibiotik, tidak dalam kondisi hamil atau haid, dan usia maksimal 60 tahun.
             </p>
           </div>
