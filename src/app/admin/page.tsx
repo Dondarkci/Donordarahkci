@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
   const db = useFirestore();
