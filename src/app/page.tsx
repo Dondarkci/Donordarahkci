@@ -36,7 +36,7 @@ export default function Home() {
               Silahkan isi formulir berikut dengan data yang benar untuk mengikuti kegiatan donor darah. Pastikan anda memilih Lokasi dan Tanggal sesuai ketersediaan.
             </p>
             <p className="text-lg md:text-xl text-[#80766E] font-normal leading-relaxed w-full">
-              Pastikan anda dalam kondisi sehat jasmani dan rohani, tidak sedang mengkonsumsi obat-batan dan antibiotik, tidak dalam kondisi hamil atau haid, dan usia maksimal 60 tahun.
+              Pastikan anda dalam kondisi sehat jasmani dan rohani, tidak sedang mengkonsumsi obat-obatan dan antibiotik, tidak dalam kondisi hamil atau haid, dan usia maksimal 60 tahun.
             </p>
           </div>
         </div>
