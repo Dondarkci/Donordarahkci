@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationOption } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Droplet, Check, X, Mail, User2 } from "lucide-react";
+import { MapPin, Droplet, Check, X, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, increment, serverTimestamp } from "firebase/firestore";
@@ -142,7 +142,7 @@ export default function RegistrationForm() {
           </div>
           <div className="text-center space-y-3 mb-8">
             <h2 className="text-[32px] font-bold text-[#2D241E] font-headline">Pendaftaran Berhasil</h2>
-            <p className="text-[#80766E] font-body">Data pendaftaran Anda telah berhasil disimpan dan kuota telah diperbarui secara otomatis.</p>
+            <p className="text-[#80766E] font-body">Pendaftaran anda telah berhasil di simpan. Silahkan buka email anda untuk melihat pesan notifikasi.</p>
           </div>
           <Button onClick={() => setSubmitted(false)} className="w-full h-[64px] bg-primary text-white rounded-[20px] text-xl font-bold">
             Selesai
