@@ -13,12 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LocationOption } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Droplet, Check, X, Mail } from "lucide-react";
+import { MapPin, Droplet, Check, X, Mail, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, increment, serverTimestamp } from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
@@ -320,6 +322,100 @@ export default function RegistrationForm() {
                     </FormItem>
                   )}
                 />
+
+                <div className="pt-2 flex justify-center">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button type="button" className="text-primary font-bold underline hover:opacity-70 transition-opacity">
+                        Kebijakan Privacy
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl w-[90vw] rounded-[32px] overflow-hidden p-0 border-none">
+                      <DialogHeader className="p-8 bg-primary text-white">
+                        <DialogTitle className="text-3xl font-headline font-bold flex items-center gap-3">
+                          <ShieldCheck className="h-8 w-8" /> Kebijakan Privasi
+                        </DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="max-h-[70vh] p-8 md:p-10">
+                        <div className="space-y-8 text-[#2D241E] font-body text-base leading-relaxed text-justify">
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">Pendahuluan</h4>
+                            <p>
+                              PT Kereta Commuter Indonesia berkomitmen melindungi privasi dan data pribadi Anda sesuai dengan ketentuan Undang-Undang Perlindungan Data Pribadi (UU PDP) Indonesia. Kebijakan Privasi ini menjelaskan bagaimana Kami mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi yang Anda berikan saat melakukan pendaftaran donor darah.
+                            </p>
+                          </section>
+
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">1. Data Pribadi yang Kami Kumpulkan</h4>
+                            <ul className="list-none space-y-1">
+                              <li>a. Nama lengkap</li>
+                              <li>b. Nomor Induk Kependudukan (NIK)</li>
+                              <li>c. Alamat email</li>
+                              <li>d. Kategori peserta (Internal / Umum)</li>
+                              <li>e. Lokasi dan tanggal donor yang dipilih</li>
+                            </ul>
+                          </section>
+
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">2. Tujuan Pengumpulan dan Penggunaan Data</h4>
+                            <p className="mb-2">Data yang dikumpulkan digunakan untuk:</p>
+                            <ul className="list-none space-y-1">
+                              <li>a. Memproses pendaftaran dan verifikasi peserta donor darah</li>
+                              <li>b. Mengatur jadwal dan lokasi kegiatan donor darah</li>
+                              <li>c. Berkomunikasi terkait kegiatan dan informasi penting lainnya</li>
+                              <li>d. Melakukan pelaporan kepada pihak terkait seperti instansi kesehatan</li>
+                              <li>e. Keperluan administrasi</li>
+                            </ul>
+                          </section>
+
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">3. Penyimpanan dan Retensi Data</h4>
+                            <p className="mb-2">Data pribadi Anda akan disimpan selama:</p>
+                            <ul className="list-none space-y-1">
+                              <li>a. Kegiatan donor darah berlangsung</li>
+                              <li>b. Maksimal 1 (satu) tahun setelah kegiatan selesai, kemudian data akan dihapus atau dianonimkan sesuai kebijakan Kami</li>
+                            </ul>
+                          </section>
+
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">4. Pengungkapan Data kepada Pihak Ketiga</h4>
+                            <p className="mb-2">Data pribadi Anda dapat dibagikan kepada:</p>
+                            <ul className="list-none space-y-1">
+                              <li>a. Instansi kesehatan seperti Palang Merah Indonesia (PMI) atau mitra medis lain yang terlibat</li>
+                              <li>b. Pihak internal PT Kereta Commuter Indonesia yang berwenang</li>
+                              <li>c. Pihak lain apabila diwajibkan oleh hukum</li>
+                            </ul>
+                            <p className="mt-2 italic">Kami memastikan bahwa pihak ketiga wajib menjaga kerahasiaan dan keamanan data yang diberikan.</p>
+                          </section>
+
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">6. Keamanan Data Pribadi</h4>
+                            <p>
+                              Kami menerapkan langkah-langkah keamanan yang sesuai untuk melindungi data pribadi Anda, termasuk pembatasan akses hanya kepada pihak yang berwenang.
+                            </p>
+                          </section>
+
+                          <section>
+                            <h4 className="font-bold text-lg mb-3">7. Hak Anda sebagai Subjek Data</h4>
+                            <p className="mb-2">Anda berhak untuk:</p>
+                            <ul className="list-none space-y-1">
+                              <li>a. Memperbaiki data jika ada kesalahan</li>
+                              <li>b. Mengajukan permintaan penghapusan data</li>
+                              <li>c. Menarik persetujuan pengolahan data kapan saja</li>
+                              <li>d. Mengajukan keberatan terhadap pemrosesan data</li>
+                            </ul>
+                          </section>
+
+                          <section className="bg-[#F8F7F4] p-6 rounded-2xl border border-[#EAE7E2]">
+                            <h4 className="font-bold text-lg mb-3">8. Kontak Pengelola Data Pribadi</h4>
+                            <p>Untuk pertanyaan, Anda dapat menghubungi:</p>
+                            <p className="font-bold text-primary mt-1">Email: dondar.kcj@kci.id</p>
+                          </section>
+                        </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               <Button type="submit" disabled={form.formState.isSubmitting} className="w-full h-16 text-xl font-bold bg-primary text-white rounded-[20px] shadow-lg">
