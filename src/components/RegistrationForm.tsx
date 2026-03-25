@@ -327,7 +327,7 @@ export default function RegistrationForm() {
                   <Dialog>
                     <DialogTrigger asChild>
                       <button type="button" className="text-primary font-bold underline hover:opacity-70 transition-opacity">
-                        Kebijakan Privacy
+                        Kebijakan Privasi
                       </button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl w-[90vw] rounded-[32px] overflow-hidden p-0 border-none">
