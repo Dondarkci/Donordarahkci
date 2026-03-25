@@ -263,7 +263,7 @@ export default function RegistrationForm() {
                   control={form.control}
                   name="agreement1"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 rounded-[24px] border border-[#EAE7E2] p-6 bg-[#FBFBFA]">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 px-2">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -284,7 +284,7 @@ export default function RegistrationForm() {
                   control={form.control}
                   name="agreement2"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 rounded-[24px] border border-[#EAE7E2] p-6 bg-[#FBFBFA]">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 px-2">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -305,7 +305,7 @@ export default function RegistrationForm() {
                   control={form.control}
                   name="agreement3"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 rounded-[24px] border border-[#EAE7E2] p-6 bg-[#FBFBFA]">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 px-2">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
