@@ -273,7 +273,7 @@ export default function RegistrationForm() {
                       </FormControl>
                       <div className="space-y-1 leading-tight">
                         <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
-                          Saya menyatakan memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
+                          Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
                         </FormLabel>
                         <FormMessage />
                       </div>
