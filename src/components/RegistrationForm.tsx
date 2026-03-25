@@ -26,7 +26,9 @@ const formSchema = z.object({
   email: z.string().email({ message: "Email tidak valid" }),
   category: z.enum(["Internal", "Umum"], { required_error: "Pilih kategori peserta" }),
   eventSlotId: z.string({ required_error: "Silakan pilih lokasi dan tanggal" }),
-  agreement: z.boolean().refine(val => val === true, { message: "Persetujuan wajib dicentang" }),
+  agreement1: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
+  agreement2: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
+  agreement3: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
 });
 
 export default function RegistrationForm() {
@@ -55,7 +57,9 @@ export default function RegistrationForm() {
       email: "",
       category: "Umum",
       eventSlotId: "",
-      agreement: false,
+      agreement1: false,
+      agreement2: false,
+      agreement3: false,
     },
   });
 
@@ -255,7 +259,7 @@ export default function RegistrationForm() {
               <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="agreement"
+                  name="agreement1"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-4 space-y-0 rounded-[24px] border border-[#EAE7E2] p-6 bg-[#FBFBFA]">
                       <FormControl>
@@ -265,13 +269,51 @@ export default function RegistrationForm() {
                           className="mt-1 h-6 w-6 rounded-lg"
                         />
                       </FormControl>
-                      <div className="space-y-2 leading-tight">
-                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify">
-                          <ol className="list-decimal pl-4 space-y-3 font-body">
-                            <li>Saya menyatakan memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.</li>
-                            <li>Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik berupa Nomor Induk Kependudukan guna keperluan donor darah, sesuai ketentuan perundang-undangan.</li>
-                            <li>Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.</li>
-                          </ol>
+                      <div className="space-y-1 leading-tight">
+                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
+                          Saya menyatakan memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="agreement2"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 rounded-[24px] border border-[#EAE7E2] p-6 bg-[#FBFBFA]">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-1 h-6 w-6 rounded-lg"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-tight">
+                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
+                          Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik berupa Nomor Induk Kependudukan guna keperluan donor darah, sesuai ketentuan perundang-undangan.
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="agreement3"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 rounded-[24px] border border-[#EAE7E2] p-6 bg-[#FBFBFA]">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-1 h-6 w-6 rounded-lg"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-tight">
+                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
+                          Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
                         </FormLabel>
                         <FormMessage />
                       </div>
