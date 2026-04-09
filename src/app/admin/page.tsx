@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Users } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
@@ -229,9 +230,28 @@ export default function AdminPage() {
             <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">{user.email} (Online)</span>
           </div>
         </div>
-        <Button onClick={handleLogout} variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-2 font-bold">
-          <LogOut className="h-4 w-4" /> Keluar
-        </Button>
+        
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-[#8B4513] hover:bg-[#8B4513]/5 gap-2 font-bold">
+                <Settings className="h-4 w-4" /> Pengaturan
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-xl border-none shadow-xl bg-white p-2 min-w-[200px]">
+              <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
+                Pengaturan develover
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
+                Pengaturan lokasi kegiatan
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button onClick={handleLogout} variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-2 font-bold">
+            <LogOut className="h-4 w-4" /> Keluar
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
