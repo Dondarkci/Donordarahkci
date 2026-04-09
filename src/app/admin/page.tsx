@@ -239,9 +239,11 @@ export default function AdminPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="rounded-xl border-none shadow-xl bg-white p-2 min-w-[200px]">
-              <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
-                Pengaturan develover
-              </DropdownMenuItem>
+              <Link href="/admin/developer">
+                <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
+                  Pengaturan develover
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
                 Pengaturan lokasi kegiatan
               </DropdownMenuItem>
