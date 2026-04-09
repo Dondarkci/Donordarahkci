@@ -195,17 +195,17 @@ export default function DeveloperSettingsPage() {
                 </TableHeader>
                 <TableBody>
                   {isListLoading ? (
-                    <TableRow><TableCell colSpan={4} className="text-center py-8">Memuat daftar...</TableCell></TableRow>
+                    <TableRow key="loading-row"><TableCell colSpan={4} className="text-center py-8">Memuat daftar...</TableCell></TableRow>
                   ) : adminList?.map((admin) => (
-                    <TableRow key={admin.uid}>
+                    <TableRow key={admin.id}>
                       <TableCell className="font-bold">{admin.email}</TableCell>
-                      <TableCell className="text-xs font-mono opacity-60">{admin.uid}</TableCell>
+                      <TableCell className="text-xs font-mono opacity-60">{admin.id}</TableCell>
                       <TableCell><span className="text-[10px] bg-muted px-2 py-0.5 rounded-full uppercase font-bold">{admin.type || "Admin"}</span></TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => handleDeleteAdmin(admin.uid, admin.email)}
+                          onClick={() => handleDeleteAdmin(admin.id, admin.email)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
