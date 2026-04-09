@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -170,7 +170,7 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Droplet className="h-12 w-12 text-primary animate-bounce mx-auto fill-primary" />
+          <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto" />
           <p className="font-bold text-[#8B4513]">Memeriksa Otoritas Admin...</p>
         </div>
       </div>
@@ -234,9 +234,9 @@ export default function AdminPage() {
                 <p className="text-[10px] opacity-70">UID: {user.uid}</p>
               </div>
               
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
-                <p className="text-xs font-bold text-amber-900 text-center">
-                  Jika Anda seharusnya memiliki akses, hubungi Super Admin atau buka pengaturan jika Anda adalah email root.
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3 text-center">
+                <p className="text-xs font-bold text-amber-900">
+                  Jika Anda seharusnya memiliki akses, hubungi Administrator atau buka pengaturan jika Anda memiliki izin khusus.
                 </p>
                 {isSuperAdmin && (
                   <Link href="/admin/developer" className="block">
@@ -277,12 +277,9 @@ export default function AdminPage() {
             <DropdownMenuContent align="end" className="rounded-xl border-none shadow-xl bg-white p-2 min-w-[200px]">
               <Link href="/admin/developer">
                 <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
-                  Pengaturan Admin & Akses
+                  Pengaturan Developer & Akses
                 </DropdownMenuItem>
               </Link>
-              <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
-                Pengaturan Lokasi Kegiatan
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

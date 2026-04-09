@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2 } from "lucide-react";
+import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
@@ -38,6 +38,7 @@ export default function DeveloperSettingsPage() {
   useEffect(() => {
     if (!isUserLoading && !isAdminCheckLoading) {
       if (!user || !isAuthorized) {
+        console.log("Unauthorized access to developer page, redirecting...");
         router.replace("/admin");
       }
     }
@@ -59,15 +60,21 @@ export default function DeveloperSettingsPage() {
     return (
       <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <RefreshCw className="h-10 w-10 text-primary animate-spin mx-auto" />
-          <p className="font-bold text-[#8B4513]">Memverifikasi akses pengembang...</p>
+          <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
+          <p className="font-bold text-[#8B4513]">Memverifikasi izin developer...</p>
         </div>
       </div>
     );
   }
   
   if (!user || !isAuthorized) {
-    return null;
+    return (
+      <div className="min-h-screen bg-[#F8F5F0] flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <ShieldCheck className="h-16 w-16 text-red-500 opacity-20" />
+        <h2 className="text-2xl font-headline font-bold">Akses Ditolak</h2>
+        <p className="text-[#80766E] max-w-md">Anda tidak memiliki izin untuk mengakses halaman ini. Mengalihkan kembali...</p>
+      </div>
+    );
   }
 
   const handlePromoteSelf = async () => {
@@ -81,7 +88,7 @@ export default function DeveloperSettingsPage() {
         createdAt: serverTimestamp(),
         type: "Self-Promoted"
       });
-      toast({ title: "Berhasil", description: "Akun Anda kini telah terdaftar sebagai Admin di database." });
+      toast({ title: "Berhasil", description: "Izin administrator Anda telah diaktifkan." });
     } catch (error: any) {
       toast({ title: "Gagal", description: error.message, variant: "destructive" });
     } finally {
@@ -106,7 +113,7 @@ export default function DeveloperSettingsPage() {
         syncedBy: user.email,
         type: "Manual-Sync"
       });
-      toast({ title: "Sinkronisasi Berhasil", description: `Akses admin diberikan ke UID: ${manualUid}` });
+      toast({ title: "Sinkronisasi Berhasil", description: `Hak admin diberikan ke UID: ${manualUid}` });
       setManualUid("");
       setManualEmail("");
     } catch (error: any) {
@@ -141,13 +148,13 @@ export default function DeveloperSettingsPage() {
         type: "New-Registration"
       });
 
-      toast({ title: "Pendaftaran Berhasil", description: `Admin ${newAdminEmail} telah terdaftar.` });
+      toast({ title: "Pendaftaran Berhasil", description: `Admin baru ${newAdminEmail} telah didaftarkan.` });
       setNewAdminEmail("");
       setNewAdminPassword("");
     } catch (error: any) {
       let msg = error.message;
       if (error.code === 'auth/email-already-in-use') {
-        msg = "Email sudah terdaftar. Gunakan 'Sinkronisasi Manual' jika belum memiliki akses.";
+        msg = "Email sudah terdaftar di sistem autentikasi. Gunakan 'Sinkronisasi Manual' jika ingin memberi akses admin.";
       }
       toast({ title: "Gagal Mendaftar", description: msg, variant: "destructive" });
     } finally {
@@ -158,17 +165,17 @@ export default function DeveloperSettingsPage() {
 
   const handleDeleteAdmin = async (uid: string, email: string) => {
     if (uid === user.uid) {
-      toast({ title: "Gagal", description: "Anda tidak bisa menghapus akun Anda sendiri.", variant: "destructive" });
+      toast({ title: "Gagal", description: "Anda tidak bisa menghapus izin Anda sendiri.", variant: "destructive" });
       return;
     }
     if (email?.toLowerCase() === "ronymunich@gmail.com") {
-      toast({ title: "Gagal", description: "Super Admin tidak bisa dihapus.", variant: "destructive" });
+      toast({ title: "Gagal", description: "Akun Super Admin tidak bisa dihapus.", variant: "destructive" });
       return;
     }
 
     try {
       await deleteDoc(doc(db, "roles_admin", uid));
-      toast({ title: "Berhasil", description: `Akses admin ${email} telah dicabut.` });
+      toast({ title: "Berhasil", description: `Izin admin untuk ${email} telah dicabut.` });
     } catch (error: any) {
       toast({ title: "Gagal Menghapus", description: error.message, variant: "destructive" });
     }
@@ -180,18 +187,18 @@ export default function DeveloperSettingsPage() {
         <div className="flex items-center justify-between">
           <Link href="/admin">
             <Button variant="ghost" className="text-[#8B4513] hover:bg-[#8B4513]/5 gap-2 font-bold">
-              <ArrowLeft className="h-4 w-4" /> Dashboard Admin
+              <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
             </Button>
           </Link>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-xs font-bold text-primary uppercase tracking-wider">Akses Admin Terverifikasi</span>
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">Mode Pengembang Aktif</span>
           </div>
         </div>
 
         <div className="space-y-2">
           <h1 className="text-4xl font-headline font-bold text-[#2D241E]">Manajemen Hak Akses</h1>
-          <p className="text-[#80766E]">Kelola akun administrator dan sinkronisasi izin database.</p>
+          <p className="text-[#80766E]">Kelola akun administrator dan sinkronisasi izin basis data.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -199,7 +206,7 @@ export default function DeveloperSettingsPage() {
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
             <CardHeader className="bg-primary/5 border-b border-primary/10">
               <CardTitle className="text-xl flex items-center gap-3 text-primary">
-                <Users className="h-5 w-5" /> Daftar Administrator Terdaftar
+                <Users className="h-5 w-5" /> Daftar Administrator Aktif
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -207,14 +214,14 @@ export default function DeveloperSettingsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
-                    <TableHead>UID</TableHead>
-                    <TableHead>Tipe</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                    <TableHead>UID (User ID)</TableHead>
+                    <TableHead>Sumber</TableHead>
+                    <TableHead className="text-right">Tindakan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isListLoading ? (
-                    <TableRow key="loading-row"><TableCell colSpan={4} className="text-center py-8">Memuat daftar...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={4} className="text-center py-8">Memuat daftar...</TableCell></TableRow>
                   ) : adminList?.map((admin) => (
                     <TableRow key={admin.id}>
                       <TableCell className="font-bold">{admin.email}</TableCell>
@@ -226,6 +233,7 @@ export default function DeveloperSettingsPage() {
                           size="sm" 
                           onClick={() => handleDeleteAdmin(admin.id, admin.email)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Cabut Akses Admin"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -247,13 +255,13 @@ export default function DeveloperSettingsPage() {
             <CardContent className="p-6 space-y-4">
               <div className="space-y-2">
                 <p className="text-sm text-amber-800">
-                  Email: <strong>{user.email}</strong><br />
-                  UID: <code className="bg-amber-100 px-1 rounded text-xs">{user.uid}</code>
+                  Email Aktif: <strong>{user.email}</strong><br />
+                  UID Anda: <code className="bg-amber-100 px-1 rounded text-xs">{user.uid}</code>
                 </p>
                 <p className="text-xs text-amber-700">
                   {hasAdminRole 
-                    ? "✓ Anda memiliki izin penuh di database." 
-                    : "⚠ Izin database belum dikonfigurasi."}
+                    ? "✓ Akun Anda sudah terdaftar di database roles." 
+                    : "⚠ Akun Anda belum memiliki izin tertulis di database roles."}
                 </p>
               </div>
               <Button 
@@ -261,7 +269,7 @@ export default function DeveloperSettingsPage() {
                 disabled={isPromoting || hasAdminRole}
                 className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold"
               >
-                {hasAdminRole ? "Izin Sudah Aktif" : isPromoting ? "Memproses..." : "Aktifkan Izin Saya"}
+                {hasAdminRole ? "Izin Sudah Terdaftar" : isPromoting ? "Memproses..." : "Daftarkan Akun Saya"}
               </Button>
             </CardContent>
           </Card>
@@ -270,13 +278,13 @@ export default function DeveloperSettingsPage() {
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
             <CardHeader className="bg-emerald-50 border-b border-emerald-100">
               <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
-                <UserPlus className="h-5 w-5" /> Registrasi Akun Baru
+                <UserPlus className="h-5 w-5" /> Tambah Admin Baru
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <form onSubmit={handleRegisterAdmin} className="space-y-4">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold">Email</Label>
+                  <Label className="text-xs font-bold">Email Baru</Label>
                   <Input 
                     type="email" 
                     value={newAdminEmail}
@@ -285,7 +293,7 @@ export default function DeveloperSettingsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold">Password</Label>
+                  <Label className="text-xs font-bold">Kata Sandi</Label>
                   <Input 
                     type="password" 
                     value={newAdminPassword}
@@ -298,7 +306,7 @@ export default function DeveloperSettingsPage() {
                   disabled={isRegistering}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold"
                 >
-                  {isRegistering ? "Memproses..." : "Buat Akun & Beri Izin"}
+                  {isRegistering ? "Mendaftarkan..." : "Daftarkan & Beri Akses"}
                 </Button>
               </form>
             </CardContent>
@@ -308,13 +316,13 @@ export default function DeveloperSettingsPage() {
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
             <CardHeader className="bg-blue-50 border-b border-blue-100">
               <CardTitle className="text-xl flex items-center gap-3 text-blue-700">
-                <RefreshCw className="h-5 w-5" /> Sinkronisasi Manual (UID)
+                <RefreshCw className="h-5 w-5" /> Sinkronisasi Email Terdaftar (via UID)
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <form onSubmit={handleManualSync} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold">Email Terdaftar</Label>
+                  <Label className="text-xs font-bold">Email Pengguna</Label>
                   <Input 
                     type="email" 
                     placeholder="email@user.com"
@@ -324,10 +332,10 @@ export default function DeveloperSettingsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold">UID User</Label>
+                  <Label className="text-xs font-bold">UID (User ID)</Label>
                   <Input 
                     type="text" 
-                    placeholder="Dapatkan UID dari halaman error login"
+                    placeholder="Masukkan UID akun tersebut"
                     value={manualUid}
                     onChange={(e) => setManualUid(e.target.value)}
                     className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
@@ -339,7 +347,7 @@ export default function DeveloperSettingsPage() {
                     disabled={isSyncing}
                     className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
                   >
-                    {isSyncing ? "Menyinkronkan..." : "Sinkronkan Akses"}
+                    {isSyncing ? "Menghubungkan..." : "Berikan Akses Admin"}
                   </Button>
                 </div>
               </form>
@@ -349,9 +357,9 @@ export default function DeveloperSettingsPage() {
           <div className="md:col-span-2 flex items-start gap-3 text-xs text-[#8B4513] bg-primary/5 p-6 rounded-2xl border border-primary/10">
             <ShieldCheck className="h-5 w-5 shrink-0" />
             <div className="space-y-1">
-              <p className="font-bold">Informasi Keamanan</p>
-              <p>Halaman ini dapat diakses oleh semua administrator yang telah diverifikasi di database.</p>
-              <p>Pastikan Anda hanya memberikan akses kepada personil yang berwenang. Segala aktivitas pendaftaran admin baru akan dicatat menggunakan email pelaksana.</p>
+              <p className="font-bold">Informasi Keamanan Akun</p>
+              <p>Halaman ini sekarang dapat diakses oleh semua administrator yang terdaftar di sistem basis data.</p>
+              <p>Setiap perubahan hak akses harus dilakukan dengan hati-hati. Jika seorang admin kehilangan akses, Super Admin dapat memulihkannya melalui bagian sinkronisasi manual di atas.</p>
             </div>
           </div>
         </div>
