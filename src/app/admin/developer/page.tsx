@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Terminal, Cpu, Database, Cloud, UserPlus, ShieldCheck, UserCheck } from "lucide-react";
+import { ArrowLeft, Terminal, Cpu, Database, Cloud, UserPlus, ShieldCheck, UserCheck, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
@@ -33,7 +33,10 @@ export default function DeveloperSettingsPage() {
 
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [manualUid, setManualUid] = useState("");
+  const [manualEmail, setManualEmail] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
 
   if (isUserLoading || (user && isAdminCheckLoading)) return <div className="p-12 text-center font-body">Memeriksa hak akses...</div>;
@@ -63,6 +66,33 @@ export default function DeveloperSettingsPage() {
     }
   };
 
+  const handleManualSync = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualUid || !manualEmail) {
+      toast({ title: "Gagal", description: "Email dan UID wajib diisi.", variant: "destructive" });
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const adminRef = doc(db, "roles_admin", manualUid.trim());
+      await setDoc(adminRef, {
+        email: manualEmail.trim(),
+        uid: manualUid.trim(),
+        createdAt: serverTimestamp(),
+        syncedBy: user.email,
+        type: "Manual-Sync"
+      });
+      toast({ title: "Sinkronisasi Berhasil", description: `Akses admin diberikan ke UID: ${manualUid}` });
+      setManualUid("");
+      setManualEmail("");
+    } catch (error: any) {
+      toast({ title: "Gagal Sinkronisasi", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleRegisterAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAdminEmail || !newAdminPassword) {
@@ -87,7 +117,8 @@ export default function DeveloperSettingsPage() {
         email: newAdminEmail,
         uid: newUserUid,
         createdAt: serverTimestamp(),
-        registeredBy: user.email
+        registeredBy: user.email,
+        type: "New-Registration"
       });
 
       toast({ 
@@ -100,7 +131,7 @@ export default function DeveloperSettingsPage() {
     } catch (error: any) {
       let msg = error.message;
       if (error.code === 'auth/email-already-in-use') {
-        msg = "Email sudah terdaftar di sistem login. Jika ia belum bisa masuk admin, hubungi developer untuk sinkronisasi UID manual.";
+        msg = "Email sudah terdaftar di sistem login. Silakan gunakan fitur 'Sinkronisasi Manual' di bawah jika ia belum bisa masuk.";
       }
       toast({ title: "Gagal Mendaftar", description: msg, variant: "destructive" });
     } finally {
@@ -130,105 +161,130 @@ export default function DeveloperSettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card: Promote Self */}
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
-            <CardHeader className="bg-emerald-50 border-b border-emerald-100">
-              <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
-                <UserPlus className="h-5 w-5" /> Registrasi Admin Baru
+            <CardHeader className="bg-amber-50 border-b border-amber-100">
+              <CardTitle className="text-xl flex items-center gap-3 text-amber-700">
+                <UserCheck className="h-5 w-5" /> Status Izin Database Anda
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8 space-y-8">
-              <div className="bg-amber-50 border border-amber-100 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <h4 className="font-bold text-amber-900 flex items-center gap-2">
-                    <UserCheck className="h-5 w-5" /> Perbaiki Akses Saya
-                  </h4>
-                  <p className="text-sm text-amber-800">Klik tombol ini jika akun yang sedang Anda gunakan ({user.email}) tidak bisa mengakses fitur admin tertentu.</p>
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <p className="text-sm text-amber-800">
+                    Email Aktif: <strong>{user.email}</strong><br />
+                    UID: <code className="bg-amber-100 px-1 rounded">{user.uid}</code>
+                  </p>
+                  <p className="text-xs text-amber-700">
+                    {hasAdminRole 
+                      ? "✓ Akun Anda sudah terdaftar di koleksi roles_admin." 
+                      : "⚠ Akun Anda belum terdaftar di koleksi roles_admin. Fitur admin tertentu mungkin tidak bekerja."}
+                  </p>
                 </div>
                 <Button 
                   onClick={handlePromoteSelf} 
                   disabled={isPromoting || hasAdminRole}
-                  className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold px-6"
+                  className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold px-8 h-12"
                 >
-                  {hasAdminRole ? "Sudah Terdaftar di DB" : isPromoting ? "Memproses..." : "Jadikan Saya Admin"}
+                  {hasAdminRole ? "Sudah Aktif" : isPromoting ? "Memproses..." : "Aktifkan Izin Database Saya"}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
 
-              <form onSubmit={handleRegisterAdmin} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          {/* Card: Register New Admin */}
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
+            <CardHeader className="bg-emerald-50 border-b border-emerald-100">
+              <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
+                <UserPlus className="h-5 w-5" /> Registrasi Akun Baru
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              <p className="text-xs text-emerald-700">Gunakan ini untuk email yang <strong>belum pernah</strong> didaftarkan sama sekali.</p>
+              <form onSubmit={handleRegisterAdmin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-[#2D241E]">Email Admin Baru</Label>
+                  <Label className="text-xs font-bold">Email</Label>
                   <Input 
                     type="email" 
-                    placeholder="admin.baru@email.com" 
                     value={newAdminEmail}
                     onChange={(e) => setNewAdminEmail(e.target.value)}
-                    className="h-12 bg-[#F8F7F4] border-none rounded-xl" 
+                    className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-[#2D241E]">Password Baru</Label>
+                  <Label className="text-xs font-bold">Password</Label>
                   <Input 
                     type="password" 
-                    placeholder="Minimal 6 karakter" 
                     value={newAdminPassword}
                     onChange={(e) => setNewAdminPassword(e.target.value)}
-                    className="h-12 bg-[#F8F7F4] border-none rounded-xl" 
+                    className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
                   />
                 </div>
                 <Button 
                   type="submit" 
                   disabled={isRegistering}
-                  className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm"
+                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold"
                 >
-                  {isRegistering ? "Mendaftarkan..." : "Daftarkan Akun"}
+                  {isRegistering ? "Memproses..." : "Buat Akun & Izin"}
                 </Button>
               </form>
-
-              <div className="flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                <ShieldCheck className="h-4 w-4 shrink-0" />
-                <div className="space-y-1">
-                  <p className="font-bold">Informasi Sinkronisasi:</p>
-                  <p>
-                    Sistem akan mendaftarkan akun ke Firebase Authentication dan secara otomatis membuat dokumen di Firestore menggunakan <strong>UID</strong> (User ID) unik akun tersebut. Ini sangat penting agar Security Rules dapat memverifikasi akses dengan benar.
-                  </p>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
-            <CardHeader className="bg-primary/5 border-b border-primary/10">
-              <CardTitle className="text-xl flex items-center gap-3 text-primary">
-                <Terminal className="h-5 w-5" /> Detail Akun Anda
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-[#80766E] uppercase">UID (ID Unik)</span>
-                <p className="font-mono text-xs bg-[#F5F3EF] p-2 rounded break-all">{user.uid}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-[#80766E] uppercase">Status Database</span>
-                <p className={`text-sm font-bold ${hasAdminRole ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {hasAdminRole ? 'Terdaftar sebagai Admin' : 'Belum Terdaftar di roles_admin'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
+          {/* Card: Sync Existing Admin (The Fix) */}
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
             <CardHeader className="bg-blue-50 border-b border-blue-100">
               <CardTitle className="text-xl flex items-center gap-3 text-blue-700">
-                <Database className="h-5 w-5" /> Integritas Data
+                <RefreshCw className="h-5 w-5" /> Sinkronisasi Email Terdaftar
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <p className="text-sm text-[#80766E]">Pastikan koleksi <code className="bg-blue-50 px-1 rounded">roles_admin</code> di Firestore menggunakan <strong>Document ID</strong> yang sama dengan UID pengguna agar akses tidak ditolak oleh sistem keamanan.</p>
-              <div className="flex justify-between items-center py-2 border-t border-[#F5F3EF]">
-                <span className="text-[#80766E] text-sm">Provider</span>
-                <span className="text-sm font-bold">{user.providerData[0]?.providerId || 'Email/Password'}</span>
-              </div>
+            <CardContent className="p-6 space-y-6">
+              <p className="text-xs text-blue-700">Gunakan ini jika email sudah terdaftar di sistem login tapi akses admin ditolak. (Minta UID dari user tersebut).</p>
+              <form onSubmit={handleManualSync} className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold">Email Terdaftar</Label>
+                  <Input 
+                    type="email" 
+                    placeholder="email@yang-sudah-ada.com"
+                    value={manualEmail}
+                    onChange={(e) => setManualEmail(e.target.value)}
+                    className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold">UID Akun Tersebut</Label>
+                  <Input 
+                    type="text" 
+                    placeholder="Dapatkan UID dari halaman error login"
+                    value={manualUid}
+                    onChange={(e) => setManualUid(e.target.value)}
+                    className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  disabled={isSyncing}
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
+                >
+                  {isSyncing ? "Menyinkronkan..." : "Berikan Akses Admin"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
+
+          <div className="md:col-span-2 flex items-start gap-3 text-xs text-[#8B4513] bg-primary/5 p-6 rounded-2xl border border-primary/10">
+            <ShieldCheck className="h-5 w-5 shrink-0" />
+            <div className="space-y-2">
+              <p className="font-bold">Kenapa Muncul "Email Sudah Terdaftar"?</p>
+              <p>
+                Ini berarti akun tersebut sudah ada di sistem login (Auth), tetapi belum memiliki data izin di database (Firestore). 
+                Keamanan sistem mewajibkan ID dokumen di database <strong>SAMA PERSIS</strong> dengan UID di sistem login.
+              </p>
+              <p>
+                <strong>Solusi:</strong> Masukkan Email dan UID akun tersebut di kartu "Sinkronisasi Manual" di atas. UID bisa dilihat oleh pengguna tersebut saat mereka mencoba login dan ditolak (muncul di kotak merah).
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
