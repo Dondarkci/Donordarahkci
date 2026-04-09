@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Registration, LocationOption } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
-import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp, query, where } from "firebase/firestore";
+import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser, useDoc } from "@/firebase";
+import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
 
@@ -35,15 +34,15 @@ export default function AdminPage() {
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
 
-  // Check if current user is an admin from Firestore roles_admin
-  const adminCheckQuery = useMemoFirebase(() => {
+  // Authorization check - Align with Security Rules by checking document by UID
+  const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
-    return query(collection(db, "roles_admin"), where("email", "==", user.email));
+    return doc(db, "roles_admin", user.uid);
   }, [db, user]);
-  const { data: adminRoleData, isLoading: isAdminCheckLoading } = useCollection(adminCheckQuery);
+  const { data: adminRoleData, isLoading: isAdminCheckLoading } = useDoc(adminRoleRef);
 
   const isSuperAdmin = user?.email === "ronymunich@gmail.com";
-  const hasAdminRole = adminRoleData && adminRoleData.length > 0;
+  const hasAdminRole = !!adminRoleData;
   const isAuthorized = isSuperAdmin || hasAdminRole;
 
   const regsQuery = useMemoFirebase(() => {
