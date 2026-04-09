@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,6 +26,7 @@ export default function DeveloperSettingsPage() {
     if (!user) return null;
     return doc(db, "roles_admin", user.uid);
   }, [db, user]);
+  
   const { data: adminRoleData, isLoading: isAdminCheckLoading } = useDoc(adminRoleRef);
 
   // Case-insensitive super admin check
@@ -34,15 +34,19 @@ export default function DeveloperSettingsPage() {
   const hasAdminRole = !!adminRoleData;
   const isAuthorized = isSuperAdmin || hasAdminRole;
 
+  // Final check to see if we've determined the user's authority
+  // We must wait if auth is loading OR if firestore check is still in progress
+  const isDeterminingAccess = isUserLoading || (!!user && isAdminCheckLoading);
+
   // Effect to handle redirection if unauthorized
   useEffect(() => {
-    if (!isUserLoading && !isAdminCheckLoading) {
+    if (!isDeterminingAccess) {
       if (!user || !isAuthorized) {
         console.log("Unauthorized access to developer page, redirecting...");
         router.replace("/admin");
       }
     }
-  }, [user, isUserLoading, isAuthorized, isAdminCheckLoading, router]);
+  }, [user, isDeterminingAccess, isAuthorized, router]);
 
   // List all admins for management
   const adminsQuery = useMemoFirebase(() => collection(db, "roles_admin"), [db]);
@@ -56,7 +60,7 @@ export default function DeveloperSettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
 
-  if (isUserLoading || isAdminCheckLoading) {
+  if (isDeterminingAccess) {
     return (
       <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center">
         <div className="text-center space-y-4">
