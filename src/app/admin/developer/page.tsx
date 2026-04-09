@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,11 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Terminal, Cpu, Database, Cloud, UserPlus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Terminal, Cpu, Database, Cloud, UserPlus, ShieldCheck, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { firebaseConfig } from "@/firebase/config";
@@ -19,7 +20,7 @@ export default function DeveloperSettingsPage() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   
-  // Authorization check - Use UID directly for efficiency and consistency with Security Rules
+  // Authorization check
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, "roles_admin", user.uid);
@@ -33,13 +34,34 @@ export default function DeveloperSettingsPage() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isPromoting, setIsPromoting] = useState(false);
 
   if (isUserLoading || (user && isAdminCheckLoading)) return <div className="p-12 text-center font-body">Memeriksa hak akses...</div>;
   
+  // Jika belum login atau bukan admin, arahkan ke login admin
   if (!user || !isAuthorized) {
     redirect("/admin");
     return null;
   }
+
+  const handlePromoteSelf = async () => {
+    if (!user) return;
+    setIsPromoting(true);
+    try {
+      const adminRef = doc(db, "roles_admin", user.uid);
+      await setDoc(adminRef, {
+        email: user.email,
+        uid: user.uid,
+        createdAt: serverTimestamp(),
+        type: "Self-Promoted"
+      });
+      toast({ title: "Berhasil", description: "Akun Anda kini telah terdaftar sebagai Admin di database." });
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } finally {
+      setIsPromoting(false);
+    }
+  };
 
   const handleRegisterAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,58 +70,40 @@ export default function DeveloperSettingsPage() {
       return;
     }
 
-    if (newAdminPassword.length < 6) {
-      toast({ title: "Gagal", description: "Password minimal 6 karakter.", variant: "destructive" });
-      return;
-    }
-
     setIsRegistering(true);
     
-    // Gunakan app instance sementara agar tidak mengganggu sesi login admin utama
     const tempAppId = `TempApp-${Date.now()}`;
     const tempApp = initializeApp(firebaseConfig, tempAppId);
     const tempAuth = getAuth(tempApp);
 
     try {
-      let newUserUid = "";
       // 1. Daftarkan di Firebase Authentication
-      try {
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, newAdminEmail, newAdminPassword);
-        newUserUid = userCredential.user.uid;
-      } catch (authError: any) {
-        if (authError.code !== 'auth/email-already-in-use') {
-          throw authError;
-        }
-        toast({ 
-          title: "Perhatian", 
-          description: "Email sudah terdaftar di Authentication. Pastikan ID dokumen di database sudah sesuai.",
-          variant: "destructive"
-        });
-      }
+      const userCredential = await createUserWithEmailAndPassword(tempAuth, newAdminEmail, newAdminPassword);
+      const newUserUid = userCredential.user.uid;
 
-      // 2. Tambahkan hak akses admin ke Firestore menggunakan UID sebagai ID dokumen
-      // Ini krusial agar Security Rules 'exists(/.../roles_admin/$(request.auth.uid))' berfungsi
-      if (newUserUid) {
-        const adminRef = doc(db, "roles_admin", newUserUid);
-        await setDoc(adminRef, {
-          email: newAdminEmail,
-          uid: newUserUid,
-          createdAt: serverTimestamp(),
-          registeredBy: user.email
-        });
+      // 2. Tambahkan ke Firestore menggunakan UID baru
+      const adminRef = doc(db, "roles_admin", newUserUid);
+      await setDoc(adminRef, {
+        email: newAdminEmail,
+        uid: newUserUid,
+        createdAt: serverTimestamp(),
+        registeredBy: user.email
+      });
 
-        toast({ 
-          title: "Pendaftaran Berhasil", 
-          description: `Admin ${newAdminEmail} telah terdaftar otomatis di sistem Authentication dan Database.` 
-        });
-        
-        setNewAdminEmail("");
-        setNewAdminPassword("");
-      }
+      toast({ 
+        title: "Pendaftaran Berhasil", 
+        description: `Admin ${newAdminEmail} telah terdaftar di sistem Auth dan Database.` 
+      });
+      
+      setNewAdminEmail("");
+      setNewAdminPassword("");
     } catch (error: any) {
-      toast({ title: "Gagal Mendaftar", description: error.message, variant: "destructive" });
+      let msg = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        msg = "Email sudah terdaftar di sistem login. Jika ia belum bisa masuk admin, hubungi developer untuk sinkronisasi UID manual.";
+      }
+      toast({ title: "Gagal Mendaftar", description: msg, variant: "destructive" });
     } finally {
-      // Hapus app instance sementara
       await deleteApp(tempApp);
       setIsRegistering(false);
     }
@@ -122,17 +126,33 @@ export default function DeveloperSettingsPage() {
 
         <div className="space-y-2">
           <h1 className="text-4xl font-headline font-bold text-[#2D241E]">Pengaturan Developer</h1>
-          <p className="text-[#80766E]">Konfigurasi teknis dan sistem aplikasi donor darah.</p>
+          <p className="text-[#80766E]">Konfigurasi teknis dan manajemen hak akses sistem.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
             <CardHeader className="bg-emerald-50 border-b border-emerald-100">
               <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
-                <UserPlus className="h-5 w-5" /> Registrasi Admin Otomatis
+                <UserPlus className="h-5 w-5" /> Registrasi Admin Baru
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-8 space-y-8">
+              <div className="bg-amber-50 border border-amber-100 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-amber-900 flex items-center gap-2">
+                    <UserCheck className="h-5 w-5" /> Perbaiki Akses Saya
+                  </h4>
+                  <p className="text-sm text-amber-800">Klik tombol ini jika akun yang sedang Anda gunakan ({user.email}) tidak bisa mengakses fitur admin tertentu.</p>
+                </div>
+                <Button 
+                  onClick={handlePromoteSelf} 
+                  disabled={isPromoting || hasAdminRole}
+                  className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold px-6"
+                >
+                  {hasAdminRole ? "Sudah Terdaftar di DB" : isPromoting ? "Memproses..." : "Jadikan Saya Admin"}
+                </Button>
+              </div>
+
               <form onSubmit={handleRegisterAdmin} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                 <div className="space-y-2">
                   <Label className="text-sm font-bold text-[#2D241E]">Email Admin Baru</Label>
@@ -159,15 +179,16 @@ export default function DeveloperSettingsPage() {
                   disabled={isRegistering}
                   className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm"
                 >
-                  {isRegistering ? "Mendaftarkan..." : "Daftarkan Sekarang"}
+                  {isRegistering ? "Mendaftarkan..." : "Daftarkan Akun"}
                 </Button>
               </form>
-              <div className="mt-4 flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+
+              <div className="flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <div className="space-y-1">
-                  <p className="font-bold">Info Sistem:</p>
+                  <p className="font-bold">Informasi Sinkronisasi:</p>
                   <p>
-                    Sistem akan mendaftarkan akun secara otomatis ke Firebase Authentication dan memberikan hak akses administrator ke database menggunakan UID akun tersebut sebagai kunci akses utama.
+                    Sistem akan mendaftarkan akun ke Firebase Authentication dan secara otomatis membuat dokumen di Firestore menggunakan <strong>UID</strong> (User ID) unik akun tersebut. Ini sangat penting agar Security Rules dapat memverifikasi akses dengan benar.
                   </p>
                 </div>
               </div>
@@ -177,21 +198,19 @@ export default function DeveloperSettingsPage() {
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 border-b border-primary/10">
               <CardTitle className="text-xl flex items-center gap-3 text-primary">
-                <Terminal className="h-5 w-5" /> Status Sistem
+                <Terminal className="h-5 w-5" /> Detail Akun Anda
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-[#F5F3EF]">
-                <span className="text-[#80766E]">Versi Aplikasi</span>
-                <span className="font-mono text-sm bg-[#F5F3EF] px-2 py-1 rounded">v1.2.0-stable</span>
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-[#80766E] uppercase">UID (ID Unik)</span>
+                <p className="font-mono text-xs bg-[#F5F3EF] p-2 rounded break-all">{user.uid}</p>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-[#F5F3EF]">
-                <span className="text-[#80766E]">Environment</span>
-                <span className="font-bold text-emerald-600">Production</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-[#80766E]">Engine</span>
-                <span className="text-sm">Next.js 15.x / Firebase</span>
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-[#80766E] uppercase">Status Database</span>
+                <p className={`text-sm font-bold ${hasAdminRole ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {hasAdminRole ? 'Terdaftar sebagai Admin' : 'Belum Terdaftar di roles_admin'}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -199,21 +218,14 @@ export default function DeveloperSettingsPage() {
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
             <CardHeader className="bg-blue-50 border-b border-blue-100">
               <CardTitle className="text-xl flex items-center gap-3 text-blue-700">
-                <Cloud className="h-5 w-5" /> Integrasi API
+                <Database className="h-5 w-5" /> Integritas Data
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-[#F5F3EF]">
-                <span className="text-[#80766E]">Email Service (Resend)</span>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">CONNECTED</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-[#F5F3EF]">
-                <span className="text-[#80766E]">WhatsApp (Fonnte)</span>
-                <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">PENDING CONFIG</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-[#80766E]">Firestore DB</span>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">ONLINE</span>
+              <p className="text-sm text-[#80766E]">Pastikan koleksi <code className="bg-blue-50 px-1 rounded">roles_admin</code> di Firestore menggunakan <strong>Document ID</strong> yang sama dengan UID pengguna agar akses tidak ditolak oleh sistem keamanan.</p>
+              <div className="flex justify-between items-center py-2 border-t border-[#F5F3EF]">
+                <span className="text-[#80766E] text-sm">Provider</span>
+                <span className="text-sm font-bold">{user.providerData[0]?.providerId || 'Email/Password'}</span>
               </div>
             </CardContent>
           </Card>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -63,7 +64,7 @@ export default function AdminPage() {
     } catch (error: any) {
       toast({ 
         title: "Login Gagal", 
-        description: "Email atau password salah, atau Anda tidak memiliki akses.",
+        description: error.message || "Email atau password salah.",
         variant: "destructive" 
       });
     } finally {
@@ -225,9 +226,24 @@ export default function AdminPage() {
           </form>
           
           {user && !isAuthorized && (
-            <p className="text-center text-xs text-red-600 font-bold bg-red-50 p-2 rounded-lg">
-              Akun Anda ({user.email}) belum dikonfigurasi sebagai Admin.
-            </p>
+            <div className="space-y-4 animate-in fade-in zoom-in">
+              <div className="text-center text-xs text-red-600 font-bold bg-red-50 p-4 rounded-2xl border border-red-100 flex flex-col items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                <p>Akun Anda ({user.email}) belum dikonfigurasi sebagai Admin di database.</p>
+                <p className="text-[10px] opacity-70">UID: {user.uid}</p>
+              </div>
+              
+              {isSuperAdmin && (
+                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
+                  <p className="text-xs font-bold text-amber-900 text-center">Anda adalah Super Admin (Email Root). Silakan daftar manual di database Firestore.</p>
+                  <Link href="/admin/developer" className="block">
+                    <Button variant="outline" className="w-full border-amber-200 text-amber-700 font-bold hover:bg-amber-100">
+                      Buka Pengaturan Developer
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
           )}
         </Card>
       </div>
