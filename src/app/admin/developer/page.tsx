@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser, useFirestore, useAuth } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,18 +11,30 @@ import { ArrowLeft, Terminal, Cpu, Database, Cloud, UserPlus, ShieldAlert } from
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp, query, where } from "firebase/firestore";
 
 export default function DeveloperSettingsPage() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   
+  // Authorization check
+  const adminCheckQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(db, "roles_admin"), where("email", "==", user.email));
+  }, [db, user]);
+  const { data: adminRoleData, isLoading: isAdminCheckLoading } = useCollection(adminCheckQuery);
+
+  const isSuperAdmin = user?.email === "ronymunich@gmail.com";
+  const hasAdminRole = adminRoleData && adminRoleData.length > 0;
+  const isAuthorized = isSuperAdmin || hasAdminRole;
+
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
 
-  if (isUserLoading) return <div className="p-12 text-center font-body">Memeriksa hak akses...</div>;
-  if (!user || user.email !== "ronymunich@gmail.com") {
+  if (isUserLoading || (user && isAdminCheckLoading)) return <div className="p-12 text-center font-body">Memeriksa hak akses...</div>;
+  
+  if (!user || !isAuthorized) {
     redirect("/admin");
     return null;
   }
@@ -36,21 +48,17 @@ export default function DeveloperSettingsPage() {
 
     setIsRegistering(true);
     try {
-      // Catatan: Di lingkungan client-side, mendaftarkan user baru akan otomatis login sebagai user tersebut.
-      // Untuk prototipe ini, kita mencatat data admin baru ke koleksi 'roles_admin' agar sistem mengenalinya.
-      // Di sistem produksi, ini biasanya dilakukan via Firebase Admin SDK (Cloud Functions).
-      
+      // Menambahkan data admin ke koleksi 'roles_admin'
       const adminRef = doc(collection(db, "roles_admin"));
       await setDoc(adminRef, {
         email: newAdminEmail,
-        password_hint: "******", // Jangan simpan password plain text di Firestore!
         createdAt: serverTimestamp(),
         registeredBy: user.email
       });
 
       toast({ 
         title: "Admin Didaftarkan", 
-        description: `Akun ${newAdminEmail} telah ditambahkan ke basis data admin.` 
+        description: `Akun ${newAdminEmail} telah ditambahkan ke basis data admin. Pastikan akun ini sudah terdaftar di Firebase Auth.` 
       });
       
       setNewAdminEmail("");
@@ -103,7 +111,7 @@ export default function DeveloperSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-[#2D241E]">Password</Label>
+                  <Label className="text-sm font-bold text-[#2D241E]">Password (Info Saja)</Label>
                   <Input 
                     type="password" 
                     placeholder="••••••••" 
@@ -122,10 +130,14 @@ export default function DeveloperSettingsPage() {
               </form>
               <div className="mt-4 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100">
                 <ShieldAlert className="h-4 w-4 shrink-0" />
-                <p>
-                  Mendaftarkan admin baru akan memberikan hak akses penuh ke dashboard. 
-                  Pastikan email yang didaftarkan sudah memiliki akun di sistem Firebase Auth.
-                </p>
+                <div className="space-y-1">
+                  <p className="font-bold">Penting:</p>
+                  <p>
+                    Mendaftarkan admin di sini hanya menambahkan hak akses ke database. 
+                    Pastikan email yang didaftarkan sudah memiliki akun di sistem Firebase Auth 
+                    (misalnya melalui halaman registrasi umum atau didaftarkan manual di console).
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

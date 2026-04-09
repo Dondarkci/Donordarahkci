@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp } from "firebase/firestore";
+import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
 
@@ -34,10 +35,21 @@ export default function AdminPage() {
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
 
-  const regsQuery = useMemoFirebase(() => {
-    if (!user || user.email !== "ronymunich@gmail.com") return null;
-    return collectionGroup(db, "registrations");
+  // Check if current user is an admin from Firestore roles_admin
+  const adminCheckQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(db, "roles_admin"), where("email", "==", user.email));
   }, [db, user]);
+  const { data: adminRoleData, isLoading: isAdminCheckLoading } = useCollection(adminCheckQuery);
+
+  const isSuperAdmin = user?.email === "ronymunich@gmail.com";
+  const hasAdminRole = adminRoleData && adminRoleData.length > 0;
+  const isAuthorized = isSuperAdmin || hasAdminRole;
+
+  const regsQuery = useMemoFirebase(() => {
+    if (!isAuthorized) return null;
+    return collectionGroup(db, "registrations");
+  }, [db, isAuthorized]);
   const { data: registrations, isLoading: isRegsLoading } = useCollection<Registration>(regsQuery);
 
   const slotsQuery = useMemoFirebase(() => collection(db, "eventSlots"), [db]);
@@ -153,7 +165,7 @@ export default function AdminPage() {
     r.category?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
-  if (isUserLoading) {
+  if (isUserLoading || (user && isAdminCheckLoading)) {
     return (
       <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -164,7 +176,7 @@ export default function AdminPage() {
     );
   }
 
-  if (!user || user.email !== "ronymunich@gmail.com") {
+  if (!user || !isAuthorized) {
     return (
       <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center p-6">
         <Card className="max-w-md w-full p-8 rounded-[40px] border-none shadow-2xl bg-white space-y-8">
@@ -212,6 +224,12 @@ export default function AdminPage() {
               </Button>
             </Link>
           </form>
+          
+          {user && !isAuthorized && (
+            <p className="text-center text-xs text-red-600 font-bold bg-red-50 p-2 rounded-lg">
+              Akun Anda ({user.email}) belum dikonfigurasi sebagai Admin.
+            </p>
+          )}
         </Card>
       </div>
     );
