@@ -42,7 +42,8 @@ export default function AdminPage() {
   }, [db, user]);
   const { data: adminRoleData, isLoading: isAdminCheckLoading } = useDoc(adminRoleRef);
 
-  const isSuperAdmin = user?.email === "ronymunich@gmail.com";
+  // Case-insensitive super admin check
+  const isSuperAdmin = user?.email?.toLowerCase() === "ronymunich@gmail.com";
   const hasAdminRole = !!adminRoleData;
   const isAuthorized = isSuperAdmin || hasAdminRole;
 
@@ -80,10 +81,10 @@ export default function AdminPage() {
   const handleSeedData = async () => {
     try {
       const initialSlots = [
+        { id: "bnicity", locationName: "Stasiun BNI City", eventDate: "2026-03-13", maxQuota: 100, currentRegistrations: 0 },
         { id: "juanda", locationName: "Stasiun Juanda", eventDate: "2026-03-10", maxQuota: 100, currentRegistrations: 0 },
         { id: "manggarai", locationName: "Stasiun Manggarai", eventDate: "2026-03-11", maxQuota: 150, currentRegistrations: 0 },
-        { id: "tanahabang", locationName: "Stasiun Tanah Abang", eventDate: "2026-03-12", maxQuota: 80, currentRegistrations: 0 },
-        { id: "bogor", locationName: "Stasiun Bogor", eventDate: "2026-03-13", maxQuota: 120, currentRegistrations: 0 }
+        { id: "tanahabang", locationName: "Stasiun Tanah Abang", eventDate: "2026-03-12", maxQuota: 80, currentRegistrations: 0 }
       ];
 
       const batch = writeBatch(db);

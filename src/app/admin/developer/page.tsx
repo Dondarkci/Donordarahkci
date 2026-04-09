@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from "@/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { doc, setDoc, serverTimestamp, collection, deleteDoc } from "firebase/firestore";
 import { initializeApp, deleteApp } from "firebase/app";
@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export default function DeveloperSettingsPage() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
+  const router = useRouter();
   
   // Authorization check
   const adminRoleRef = useMemoFirebase(() => {
@@ -28,13 +29,23 @@ export default function DeveloperSettingsPage() {
   }, [db, user]);
   const { data: adminRoleData, isLoading: isAdminCheckLoading } = useDoc(adminRoleRef);
 
+  // Case-insensitive super admin check
+  const isSuperAdmin = user?.email?.toLowerCase() === "ronymunich@gmail.com";
+  const hasAdminRole = !!adminRoleData;
+  const isAuthorized = isSuperAdmin || hasAdminRole;
+
+  // Effect to handle redirection if unauthorized
+  useEffect(() => {
+    if (!isUserLoading && !isAdminCheckLoading) {
+      if (!user || !isAuthorized) {
+        router.replace("/admin");
+      }
+    }
+  }, [user, isUserLoading, isAuthorized, isAdminCheckLoading, router]);
+
   // List all admins for management
   const adminsQuery = useMemoFirebase(() => collection(db, "roles_admin"), [db]);
   const { data: adminList, isLoading: isListLoading } = useCollection(adminsQuery);
-
-  const isSuperAdmin = user?.email === "ronymunich@gmail.com";
-  const hasAdminRole = !!adminRoleData;
-  const isAuthorized = isSuperAdmin || hasAdminRole;
 
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
@@ -44,10 +55,18 @@ export default function DeveloperSettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
 
-  if (isUserLoading || (user && isAdminCheckLoading)) return <div className="p-12 text-center font-body">Memeriksa hak akses...</div>;
+  if (isUserLoading || isAdminCheckLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8F5F0] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <RefreshCw className="h-10 w-10 text-primary animate-spin mx-auto" />
+          <p className="font-bold text-[#8B4513]">Memverifikasi akses pengembang...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!user || !isAuthorized) {
-    redirect("/admin");
     return null;
   }
 
@@ -142,7 +161,7 @@ export default function DeveloperSettingsPage() {
       toast({ title: "Gagal", description: "Anda tidak bisa menghapus akun Anda sendiri.", variant: "destructive" });
       return;
     }
-    if (email === "ronymunich@gmail.com") {
+    if (email?.toLowerCase() === "ronymunich@gmail.com") {
       toast({ title: "Gagal", description: "Super Admin tidak bisa dihapus.", variant: "destructive" });
       return;
     }
@@ -199,7 +218,7 @@ export default function DeveloperSettingsPage() {
                   ) : adminList?.map((admin) => (
                     <TableRow key={admin.id}>
                       <TableCell className="font-bold">{admin.email}</TableCell>
-                      <TableCell className="text-xs font-mono opacity-60">{admin.id}</TableCell>
+                      <TableCell className="text-xs font-mono opacity-60">{admin.uid || admin.id}</TableCell>
                       <TableCell><span className="text-[10px] bg-muted px-2 py-0.5 rounded-full uppercase font-bold">{admin.type || "Admin"}</span></TableCell>
                       <TableCell className="text-right">
                         <Button 
