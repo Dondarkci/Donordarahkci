@@ -35,7 +35,7 @@ export default function AdminPage() {
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
 
-  // Authorization check - Align with Security Rules by checking document by UID
+  // Authorization check
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, "roles_admin", user.uid);
@@ -233,16 +233,18 @@ export default function AdminPage() {
                 <p className="text-[10px] opacity-70">UID: {user.uid}</p>
               </div>
               
-              {isSuperAdmin && (
-                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
-                  <p className="text-xs font-bold text-amber-900 text-center">Anda adalah Super Admin (Email Root). Silakan daftar manual di database Firestore.</p>
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3">
+                <p className="text-xs font-bold text-amber-900 text-center">
+                  Jika Anda seharusnya memiliki akses, hubungi Super Admin atau buka pengaturan jika Anda adalah email root.
+                </p>
+                {isSuperAdmin && (
                   <Link href="/admin/developer" className="block">
                     <Button variant="outline" className="w-full border-amber-200 text-amber-700 font-bold hover:bg-amber-100">
                       Buka Pengaturan Developer
                     </Button>
                   </Link>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </Card>
@@ -274,11 +276,11 @@ export default function AdminPage() {
             <DropdownMenuContent align="end" className="rounded-xl border-none shadow-xl bg-white p-2 min-w-[200px]">
               <Link href="/admin/developer">
                 <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
-                  Pengaturan develover
+                  Pengaturan Admin & Akses
                 </DropdownMenuItem>
               </Link>
               <DropdownMenuItem className="cursor-pointer font-bold py-3 px-4 rounded-lg focus:bg-primary/5 focus:text-primary transition-colors">
-                Pengaturan lokasi kegiatan
+                Pengaturan Lokasi Kegiatan
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
