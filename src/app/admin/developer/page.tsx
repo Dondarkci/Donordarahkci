@@ -1,20 +1,66 @@
+
 "use client";
 
-import { useUser } from "@/firebase";
+import { useState } from "react";
+import { useUser, useFirestore, useAuth } from "@/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Terminal, Cpu, Database, Cloud } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Terminal, Cpu, Database, Cloud, UserPlus, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
+import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function DeveloperSettingsPage() {
   const { user, isUserLoading } = useUser();
+  const db = useFirestore();
+  
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  if (isUserLoading) return <div className="p-12 text-center">Memeriksa hak akses...</div>;
+  if (isUserLoading) return <div className="p-12 text-center font-body">Memeriksa hak akses...</div>;
   if (!user || user.email !== "ronymunich@gmail.com") {
     redirect("/admin");
     return null;
   }
+
+  const handleRegisterAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminEmail || !newAdminPassword) {
+      toast({ title: "Gagal", description: "Email dan Password wajib diisi.", variant: "destructive" });
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      // Catatan: Di lingkungan client-side, mendaftarkan user baru akan otomatis login sebagai user tersebut.
+      // Untuk prototipe ini, kita mencatat data admin baru ke koleksi 'roles_admin' agar sistem mengenalinya.
+      // Di sistem produksi, ini biasanya dilakukan via Firebase Admin SDK (Cloud Functions).
+      
+      const adminRef = doc(collection(db, "roles_admin"));
+      await setDoc(adminRef, {
+        email: newAdminEmail,
+        password_hint: "******", // Jangan simpan password plain text di Firestore!
+        createdAt: serverTimestamp(),
+        registeredBy: user.email
+      });
+
+      toast({ 
+        title: "Admin Didaftarkan", 
+        description: `Akun ${newAdminEmail} telah ditambahkan ke basis data admin.` 
+      });
+      
+      setNewAdminEmail("");
+      setNewAdminPassword("");
+    } catch (error: any) {
+      toast({ title: "Gagal Mendaftar", description: error.message, variant: "destructive" });
+    } finally {
+      setIsRegistering(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 space-y-8 font-body">
@@ -32,11 +78,58 @@ export default function DeveloperSettingsPage() {
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-4xl font-headline font-bold text-[#2D241E]">Pengaturan Develover</h1>
+          <h1 className="text-4xl font-headline font-bold text-[#2D241E]">Pengaturan Developer</h1>
           <p className="text-[#80766E]">Konfigurasi teknis dan sistem aplikasi donor darah.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Admin Registration Card */}
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
+            <CardHeader className="bg-emerald-50 border-b border-emerald-100">
+              <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
+                <UserPlus className="h-5 w-5" /> Registrasi Admin Baru
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <form onSubmit={handleRegisterAdmin} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold text-[#2D241E]">Email Admin Baru</Label>
+                  <Input 
+                    type="email" 
+                    placeholder="admin.baru@email.com" 
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    className="h-12 bg-[#F8F7F4] border-none rounded-xl" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold text-[#2D241E]">Password</Label>
+                  <Input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={newAdminPassword}
+                    onChange={(e) => setNewAdminPassword(e.target.value)}
+                    className="h-12 bg-[#F8F7F4] border-none rounded-xl" 
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  disabled={isRegistering}
+                  className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm"
+                >
+                  {isRegistering ? "Memproses..." : "Daftarkan Admin"}
+                </Button>
+              </form>
+              <div className="mt-4 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                <ShieldAlert className="h-4 w-4 shrink-0" />
+                <p>
+                  Mendaftarkan admin baru akan memberikan hak akses penuh ke dashboard. 
+                  Pastikan email yang didaftarkan sudah memiliki akun di sistem Firebase Auth.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 border-b border-primary/10">
               <CardTitle className="text-xl flex items-center gap-3 text-primary">
