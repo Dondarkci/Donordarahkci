@@ -36,15 +36,7 @@ const formSchema = z.object({
   agreement2: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
   agreement3: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
 }).superRefine((data, ctx) => {
-  if (data.category === "Umum") {
-    if (!data.nik || data.nik.length !== 16) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "NIK harus 16 digit",
-        path: ["nik"],
-      });
-    }
-  } else if (data.category === "Pegawai KCI") {
+  if (data.category === "Pegawai KCI") {
     if (!data.nipp || data.nipp.length < 3) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -141,7 +133,7 @@ export default function RegistrationForm() {
     const regData = {
       id: registrationId,
       fullName: values.fullName,
-      nik: values.category === "Umum" ? values.nik : "",
+      nik: values.category === "Umum" ? "" : (values.nik || ""),
       nipp: values.category === "Pegawai KCI" ? values.nipp : "",
       unitKerja: values.category === "Pegawai KCI" ? values.unitKerja : "",
       email: values.email,
@@ -286,15 +278,7 @@ export default function RegistrationForm() {
                 </div>
 
                 {/* Conditional Fields based on Category */}
-                {category === "Umum" ? (
-                  <FormField control={form.control} name="nik" render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel className="text-[#80766E]">NIK (16 Digit)</FormLabel>
-                      <FormControl><Input placeholder="Masukkan 16 Digit NIK Anda" maxLength={16} {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                ) : (
+                {category === "Pegawai KCI" && (
                   <>
                     <FormField control={form.control} name="nipp" render={({ field }) => (
                       <FormItem>

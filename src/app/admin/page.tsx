@@ -648,7 +648,6 @@ export default function AdminPage() {
             </Table>
           </div>
           
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-[#F5F3EF]">
               <div className="text-sm text-[#80766E] font-medium order-2 md:order-1">
@@ -668,7 +667,6 @@ export default function AdminPage() {
                 <div className="hidden sm:flex items-center gap-1 mx-2">
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
-                    // Show current page, first, last, and pages around current
                     if (
                       pageNum === 1 || 
                       pageNum === totalPages || 
@@ -719,7 +717,6 @@ export default function AdminPage() {
         </div>
       </Card>
 
-      {/* Dialog for Location Editing */}
       <Dialog open={!!editingLoc} onOpenChange={(open) => !open && setEditingLoc(null)}>
         <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
           <DialogHeader>
@@ -761,7 +758,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Registration Editing */}
       <Dialog open={!!editingReg} onOpenChange={(open) => !open && setEditingReg(null)}>
         <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
           <DialogHeader>
@@ -770,24 +766,26 @@ export default function AdminPage() {
           <div className="py-6 space-y-5">
             <div className="space-y-2">
               <Label className="text-sm font-bold">Nama Lengkap</Label>
-              <Input value={editRegName} onChange={(e) => setEditRegName(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+              <Input value={editRegName} onChange={(e) => setEditRegName(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-2xl" />
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-bold">Email</Label>
-              <Input type="email" value={editRegEmail} onChange={(e) => setEditRegEmail(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+              <Input type="email" value={editRegEmail} onChange={(e) => setEditRegEmail(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-2xl" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">{(editingReg?.category === "Pegawai KCI" || editingReg?.category === "Internal") ? "NIPP/NIK" : "NIK"}</Label>
-              <Input value={editRegIdNumber} onChange={(e) => setEditRegIdNumber(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
-            </div>
+            
             {(editingReg?.category === "Pegawai KCI" || editingReg?.category === "Internal") && (
-              <div className="space-y-2">
-                <Label className="text-sm font-bold">Unit Kerja</Label>
-                <Input value={editRegUnit} onChange={(e) => setEditRegUnit(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold">NIPP/NIK</Label>
+                  <Input value={editRegIdNumber} onChange={(e) => setEditRegIdNumber(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-2xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold">Unit Kerja</Label>
+                  <Input value={editRegUnit} onChange={(e) => setEditRegUnit(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-2xl" />
+                </div>
+              </>
             )}
             
-            {/* Conditional Rendering for Location Selection based on Active Seed */}
             {(() => {
               if (!editingReg) return null;
               const currentSlot = locations?.find(l => l.id === editingReg.eventSlotId);
@@ -796,7 +794,6 @@ export default function AdminPage() {
               const regDateSecs = editingReg.registrationDate?.seconds || 0;
               const slotUpdateSecs = currentSlot.updatedAt?.seconds || 0;
               
-              // Only allow location editing if the registration is from the current active seed
               if (regDateSecs > slotUpdateSecs) {
                 return (
                   <div className="space-y-2">
@@ -820,7 +817,6 @@ export default function AdminPage() {
                 );
               }
               
-              // Otherwise, show as read-only (locked)
               return (
                 <div className="space-y-2">
                   <Label className="text-sm font-bold">Lokasi & Waktu Kegiatan</Label>
