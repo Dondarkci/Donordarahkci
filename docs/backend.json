@@ -23,7 +23,7 @@
         "fullName": { "type": "string" },
         "nik": { "type": "string" },
         "email": { "type": "string", "format": "email" },
-        "category": { "type": "string", "enum": ["Internal", "Umum"] },
+        "category": { "type": "string", "enum": ["Pegawai KCI", "Umum"] },
         "eventSlotId": { "type": "string" },
         "registrationDate": { "type": "object" },
         "githubUserId": { "type": "string" },

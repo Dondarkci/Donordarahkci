@@ -26,7 +26,7 @@ const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
   nik: z.string().length(16, { message: "NIK harus 16 digit" }),
   email: z.string().email({ message: "Email tidak valid" }),
-  category: z.enum(["Internal", "Umum"], { required_error: "Pilih kategori peserta" }),
+  category: z.enum(["Pegawai KCI", "Umum"], { required_error: "Pilih kategori peserta" }),
   eventSlotId: z.string({ required_error: "Silakan pilih lokasi dan tanggal" }),
   agreement1: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
   agreement2: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
@@ -71,8 +71,6 @@ export default function RegistrationForm() {
     return Math.max((loc.maxQuota || 0) - (loc.currentRegistrations || 0), 0);
   };
 
-  // Filter out locations that are empty (no name)
-  // Locations with maxQuota 0 will be shown as "Penuh"
   const activeLocations = locations?.filter(loc => 
     loc.locationName && 
     loc.locationName.trim() !== ""
@@ -213,9 +211,9 @@ export default function RegistrationForm() {
                         >
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="Internal" className="h-5 w-5 border-primary text-primary" />
+                              <RadioGroupItem value="Pegawai KCI" className="h-5 w-5 border-primary text-primary" />
                             </FormControl>
-                            <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Internal</FormLabel>
+                            <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Pegawai KCI</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
@@ -358,7 +356,7 @@ export default function RegistrationForm() {
                               <li>a. Nama lengkap</li>
                               <li>b. Nomor Induk Kependudukan (NIK)</li>
                               <li>c. Alamat email</li>
-                              <li>d. Kategori peserta (Internal / Umum)</li>
+                              <li>d. Kategori peserta (Pegawai KCI / Umum)</li>
                               <li>e. Lokasi dan tanggal donor yang dipilih</li>
                             </ul>
                           </section>

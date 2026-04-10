@@ -25,7 +25,6 @@ export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Login states
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -35,14 +34,12 @@ export default function AdminPage() {
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
 
-  // Authorization check
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, "roles_admin", user.uid);
   }, [db, user]);
   const { data: adminRoleData, isLoading: isAdminCheckLoading } = useDoc(adminRoleRef);
 
-  // Case-insensitive super admin check
   const isSuperAdmin = user?.email?.toLowerCase() === "ronymunich@gmail.com";
   const hasAdminRole = !!adminRoleData;
   const isAuthorized = isSuperAdmin || hasAdminRole;
@@ -396,7 +393,7 @@ export default function AdminPage() {
                       <TableCell className="font-bold">{reg.nik}</TableCell>
                       <TableCell>{reg.email}</TableCell>
                       <TableCell>
-                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold", reg.category === "Internal" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
+                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold", reg.category === "Pegawai KCI" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
                           {reg.category}
                         </span>
                       </TableCell>
