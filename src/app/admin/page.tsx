@@ -784,24 +784,51 @@ export default function AdminPage() {
               </div>
             )}
             
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">Lokasi & Waktu Kegiatan</Label>
-              <Select value={editRegSlotId} onValueChange={setEditRegSlotId}>
-                <SelectTrigger className="h-12 bg-[#F8F7F4] border-none rounded-xl">
-                  <SelectValue placeholder="Pilih Lokasi" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl border-none shadow-xl">
-                  {locations?.filter(l => l.locationName).map((loc) => (
-                    <SelectItem key={loc.id} value={loc.id} className="rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3 text-primary" />
-                        <span>{loc.locationName} - {loc.eventDate}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Conditional Rendering for Location Selection based on Active Seed */}
+            {(() => {
+              if (!editingReg) return null;
+              const currentSlot = locations?.find(l => l.id === editingReg.eventSlotId);
+              if (!currentSlot) return null;
+
+              const regDateSecs = editingReg.registrationDate?.seconds || 0;
+              const slotUpdateSecs = currentSlot.updatedAt?.seconds || 0;
+              
+              // Only allow location editing if the registration is from the current active seed
+              if (regDateSecs > slotUpdateSecs) {
+                return (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Lokasi & Waktu Kegiatan</Label>
+                    <Select value={editRegSlotId} onValueChange={setEditRegSlotId}>
+                      <SelectTrigger className="h-12 bg-[#F8F7F4] border-none rounded-xl">
+                        <SelectValue placeholder="Pilih Lokasi" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl border-none shadow-xl">
+                        {locations?.filter(l => l.locationName).map((loc) => (
+                          <SelectItem key={loc.id} value={loc.id} className="rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-3 w-3 text-primary" />
+                              <span>{loc.locationName} - {loc.eventDate}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              }
+              
+              // Otherwise, show as read-only (locked)
+              return (
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold">Lokasi & Waktu Kegiatan</Label>
+                  <div className="h-12 bg-gray-50 text-gray-500 border border-gray-100 rounded-xl px-4 flex items-center gap-2 text-sm italic">
+                    <MapPin className="h-4 w-4" />
+                    {editingReg.locationName} - {editingReg.locationDate} (Data Terkunci)
+                  </div>
+                  <p className="text-[10px] text-[#80766E] italic">*Lokasi tidak dapat diubah karena merupakan data historis (sebelum seed terakhir).</p>
+                </div>
+              );
+            })()}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditingReg(null)} className="h-12 rounded-xl border-none bg-[#F8F7F4]">Batal</Button>
