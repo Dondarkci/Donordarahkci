@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -264,8 +263,6 @@ export default function AdminPage() {
           updateData.locationName = newSlot.locationName;
           updateData.locationDate = newSlot.eventDate;
 
-          // Only adjust quotas for the same "session/seed" context
-          // or just always adjust if we trust current numbers
           const oldSlotRef = doc(db, "eventSlots", editingReg.eventSlotId);
           const newSlotRef = doc(db, "eventSlots", editRegSlotId);
 
@@ -285,27 +282,33 @@ export default function AdminPage() {
     }
   };
 
-  const filteredData = registrations?.filter(r => {
-    const matchesSearch = r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.nik && r.nik.includes(searchQuery)) ||
-      (r.nipp && r.nipp.includes(searchQuery)) ||
-      r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.category?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesDate = true;
-    if (startDate && endDate && r.locationDate) {
-      try {
-        const eventDate = parseISO(r.locationDate);
-        const start = startOfDay(parseISO(startDate));
-        const end = endOfDay(parseISO(endDate));
-        matchesDate = isWithinInterval(eventDate, { start, end });
-      } catch (e) {
-        matchesDate = true;
+  const filteredData = (registrations || [])
+    .filter(r => {
+      const matchesSearch = r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.nik && r.nik.includes(searchQuery)) ||
+        (r.nipp && r.nipp.includes(searchQuery)) ||
+        r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.category?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      let matchesDate = true;
+      if (startDate && endDate && r.locationDate) {
+        try {
+          const eventDate = parseISO(r.locationDate);
+          const start = startOfDay(parseISO(startDate));
+          const end = endOfDay(parseISO(endDate));
+          matchesDate = isWithinInterval(eventDate, { start, end });
+        } catch (e) {
+          matchesDate = true;
+        }
       }
-    }
 
-    return matchesSearch && matchesDate;
-  }) || [];
+      return matchesSearch && matchesDate;
+    })
+    .sort((a, b) => {
+      const timeA = a.registrationDate?.seconds || 0;
+      const timeB = b.registrationDate?.seconds || 0;
+      return timeB - timeA;
+    });
 
   if (isUserLoading || (user && isAdminCheckLoading)) {
     return (
