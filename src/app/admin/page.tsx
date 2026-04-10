@@ -185,7 +185,7 @@ export default function AdminPage() {
     const headers = ["Nama Lengkap", "NIK/NIPP", "Unit Kerja", "Email", "Gol. Darah", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
     const rows = filteredData.map(r => [
       r.fullName,
-      r.category === "Pegawai KCI" || r.category === "Internal" ? `'${r.nipp || ""}` : `'${r.nik || ""}`,
+      r.category === "Pegawai KCI" || r.category === "Internal" ? `'${r.nipp || r.nik || ""}` : `'${r.nik || r.nipp || ""}`,
       r.unitKerja || "-",
       r.email,
       r.bloodType || "-",
@@ -237,7 +237,8 @@ export default function AdminPage() {
     setEditRegName(reg.fullName);
     setEditRegEmail(reg.email);
     setEditRegUnit(reg.unitKerja || "");
-    const idNum = (reg.category === "Pegawai KCI" || reg.category === "Internal") ? (reg.nipp || "") : (reg.nik || "");
+    // Fallback: use NIPP or NIK depending on what's available for the employee category
+    const idNum = (reg.category === "Pegawai KCI" || reg.category === "Internal") ? (reg.nipp || reg.nik || "") : (reg.nik || reg.nipp || "");
     setEditRegIdNumber(idNum);
     setEditRegSlotId(reg.eventSlotId);
   };
@@ -574,7 +575,8 @@ export default function AdminPage() {
                     <TableRow key={reg.id}>
                       <TableCell className="font-bold text-center">{reg.fullName}</TableCell>
                       <TableCell className="font-bold text-center">
-                        {reg.category === "Pegawai KCI" || reg.category === "Internal" ? (reg.nipp || "-") : (reg.nik || "-")}
+                        {/* Use NIPP as primary, but fallback to NIK for old data where category might mismatch or be mixed */}
+                        {(reg.nipp || reg.nik || "-")}
                       </TableCell>
                       <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-[10px] md:text-xs border border-red-100 p-1 text-center leading-tight">
