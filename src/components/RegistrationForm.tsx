@@ -540,7 +540,7 @@ export default function RegistrationForm() {
                           <AccordionItem value="item-1" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
                             <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Siapa saja yang boleh mendonorkan darah?</AccordionTrigger>
                             <AccordionContent className="text-[#80766E] leading-relaxed">
-                              Pria atau wanita berusia 17–60 tahun (atau hingga 65 tahun dengan izin dokter), memiliki berat badan minimal 45 kg, dan dalam kondisi sehat jasmani.
+                              Pria atau wanita berusia 17–60 tahun (atau hingga 65 tahun dengan izin dokter), dan dalam kondisi sehat jasmani.
                             </AccordionContent>
                           </AccordionItem>
                           <AccordionItem value="item-2" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
