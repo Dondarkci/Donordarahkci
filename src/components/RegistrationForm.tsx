@@ -71,11 +71,11 @@ export default function RegistrationForm() {
     return Math.max((loc.maxQuota || 0) - (loc.currentRegistrations || 0), 0);
   };
 
-  // Filter out locations that are empty (no name or no quota)
+  // Filter out locations that are empty (no name)
+  // Locations with maxQuota 0 will be shown as "Penuh"
   const activeLocations = locations?.filter(loc => 
     loc.locationName && 
-    loc.locationName.trim() !== "" && 
-    loc.maxQuota > 0
+    loc.locationName.trim() !== ""
   ) || [];
 
   function onSubmit(values: z.infer<typeof formSchema>) {
