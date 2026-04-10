@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser, useDoc } from "@/firebase";
-import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp, deleteDoc, increment } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
@@ -124,6 +124,31 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteReg = async (reg: Registration) => {
+    try {
+      const batch = writeBatch(db);
+      
+      // 1. Hapus pendaftaran
+      const regRef = doc(db, "users", reg.githubUserId, "registrations", reg.id);
+      batch.delete(regRef);
+      
+      // 2. Kurangi jumlah pendaftar di slot (menambah kuota tersisa)
+      const slotRef = doc(db, "eventSlots", reg.eventSlotId);
+      batch.update(slotRef, { 
+        currentRegistrations: increment(-1) 
+      });
+      
+      await batch.commit();
+      toast({ 
+        title: "Pendaftar Berhasil Dihapus", 
+        description: `Data ${reg.fullName} telah dihapus dan kuota telah dikembalikan.` 
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Gagal Menghapus Data", variant: "destructive" });
+    }
+  };
+
   const downloadExcel = () => {
     if (!registrations || registrations.length === 0) {
       toast({ title: "Gagal Download", description: "Belum ada data pendaftar.", variant: "destructive" });
@@ -153,6 +178,10 @@ export default function AdminPage() {
   };
 
   const handleSaveLocation = async () => {
+    if (!newName || !newDate || newCapacity < 0) {
+      toast({ title: "Data Tidak Valid", variant: "destructive" });
+      return;
+    }
     if (!editingLoc) return;
     try {
       const slotRef = doc(db, "eventSlots", editingLoc.id);
@@ -180,8 +209,6 @@ export default function AdminPage() {
   const handleSaveReg = async () => {
     if (!editingReg) return;
     try {
-      // Find the document path. We know registrations are in users/{userId}/registrations/{id}
-      // The Registration type has the ID and the githubUserId (which is the userId)
       const regRef = doc(db, "users", editingReg.githubUserId, "registrations", editingReg.id);
       
       const updateData: any = {
@@ -482,14 +509,50 @@ export default function AdminPage() {
                         {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleEditReg(reg)}
-                          className="text-primary hover:text-primary hover:bg-primary/10 rounded-full"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleEditReg(reg)}
+                            className="text-primary hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0"
+                            title="Edit Data"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full h-8 w-8 p-0"
+                                title="Hapus Pendaftar"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="rounded-[32px] border-none shadow-2xl">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-2xl font-headline font-bold text-[#2D241E] flex items-center gap-2">
+                                  <AlertTriangle className="h-6 w-6 text-red-500" /> Hapus Pendaftar?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription className="text-[#80766E] text-base">
+                                  Apakah Anda yakin ingin menghapus data <strong>{reg.fullName}</strong>? 
+                                  Tindakan ini akan mengembalikan 1 slot kuota untuk lokasi <strong>{reg.locationName}</strong>.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="gap-2">
+                                <AlertDialogCancel className="h-12 rounded-xl font-bold border-none bg-[#F8F7F4]">Batal</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteReg(reg)} 
+                                  className="h-12 rounded-xl bg-destructive text-white font-bold"
+                                >
+                                  Ya, Hapus Data
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -500,8 +563,9 @@ export default function AdminPage() {
         </div>
       </Card>
 
+      {/* Dialog for Location Editing */}
       <Dialog open={!!editingLoc} onOpenChange={(open) => !open && setEditingLoc(null)}>
-        <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl">
+        <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-headline font-bold">Edit Detail Lokasi</DialogTitle>
           </DialogHeader>
@@ -520,12 +584,13 @@ export default function AdminPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setEditingLoc(null)} className="h-12 rounded-xl">Batal</Button>
-            <Button onClick={handleSaveLocation} className="h-12 rounded-xl bg-primary text-white">Simpan</Button>
+            <Button variant="outline" onClick={() => setEditingLoc(null)} className="h-12 rounded-xl border-none bg-[#F8F7F4]">Batal</Button>
+            <Button onClick={handleSaveLocation} className="h-12 rounded-xl bg-primary text-white font-bold">Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Dialog for Registration Editing */}
       <Dialog open={!!editingReg} onOpenChange={(open) => !open && setEditingReg(null)}>
         <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
           <DialogHeader>
@@ -552,8 +617,8 @@ export default function AdminPage() {
             )}
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setEditingReg(null)} className="h-12 rounded-xl">Batal</Button>
-            <Button onClick={handleSaveReg} className="h-12 rounded-xl bg-primary text-white">Simpan Perubahan</Button>
+            <Button variant="outline" onClick={() => setEditingReg(null)} className="h-12 rounded-xl border-none bg-[#F8F7F4]">Batal</Button>
+            <Button onClick={handleSaveReg} className="h-12 rounded-xl bg-primary text-white font-bold">Simpan Perubahan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
