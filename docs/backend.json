@@ -22,6 +22,8 @@
         "id": { "type": "string" },
         "fullName": { "type": "string" },
         "nik": { "type": "string" },
+        "nipp": { "type": "string" },
+        "unitKerja": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "category": { "type": "string", "enum": ["Pegawai KCI", "Umum"] },
         "eventSlotId": { "type": "string" },
@@ -30,7 +32,7 @@
         "locationName": { "type": "string" },
         "locationDate": { "type": "string" }
       },
-      "required": ["id", "fullName", "nik", "email", "category", "eventSlotId", "githubUserId"]
+      "required": ["id", "fullName", "email", "category", "eventSlotId", "githubUserId"]
     }
   },
   "auth": {

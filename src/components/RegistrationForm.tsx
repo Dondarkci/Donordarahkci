@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LocationOption } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Droplet, Check, X, Mail, ShieldCheck } from "lucide-react";
+import { MapPin, Droplet, Check, X, Mail, ShieldCheck, Briefcase, Contact } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, increment, serverTimestamp } from "firebase/firestore";
@@ -24,13 +24,40 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
-  nik: z.string().length(16, { message: "NIK harus 16 digit" }),
   email: z.string().email({ message: "Email tidak valid" }),
   category: z.enum(["Pegawai KCI", "Umum"], { required_error: "Pilih kategori peserta" }),
+  nik: z.string().optional(),
+  nipp: z.string().optional(),
+  unitKerja: z.string().optional(),
   eventSlotId: z.string({ required_error: "Silakan pilih lokasi dan tanggal" }),
   agreement1: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
   agreement2: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
   agreement3: z.boolean().refine(val => val === true, { message: "Persetujuan ini wajib dicentang" }),
+}).superRefine((data, ctx) => {
+  if (data.category === "Umum") {
+    if (!data.nik || data.nik.length !== 16) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "NIK harus 16 digit",
+        path: ["nik"],
+      });
+    }
+  } else if (data.category === "Pegawai KCI") {
+    if (!data.nipp || data.nipp.length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "NIPP/NIK harus diisi",
+        path: ["nipp"],
+      });
+    }
+    if (!data.unitKerja || data.unitKerja.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Unit Kerja harus diisi",
+        path: ["unitKerja"],
+      });
+    }
+  }
 });
 
 export default function RegistrationForm() {
@@ -55,15 +82,19 @@ export default function RegistrationForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
-      nik: "",
       email: "",
       category: "Umum",
+      nik: "",
+      nipp: "",
+      unitKerja: "",
       eventSlotId: "",
       agreement1: false,
       agreement2: false,
       agreement3: false,
     },
   });
+
+  const category = form.watch("category");
 
   const getQuotaRemaining = (id: string) => {
     const loc = locations?.find(l => l.id === id);
@@ -105,7 +136,9 @@ export default function RegistrationForm() {
     const regData = {
       id: registrationId,
       fullName: values.fullName,
-      nik: values.nik,
+      nik: values.category === "Umum" ? values.nik : "",
+      nipp: values.category === "Pegawai KCI" ? values.nipp : "",
+      unitKerja: values.category === "Pegawai KCI" ? values.unitKerja : "",
       email: values.email,
       category: values.category,
       eventSlotId: values.eventSlotId,
@@ -180,13 +213,7 @@ export default function RegistrationForm() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="nik" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[#80766E]">NIK (16 Digit)</FormLabel>
-                    <FormControl><Input placeholder="16 Digit Angka" maxLength={16} {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                
                 <FormField control={form.control} name="email" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-[#80766E]">Alamat Email</FormLabel>
@@ -199,8 +226,9 @@ export default function RegistrationForm() {
                     <FormMessage />
                   </FormItem>
                 )} />
+
                 <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem className="space-y-2 md:col-span-2">
                     <FormLabel className="text-[#80766E]">Kategori</FormLabel>
                     <FormControl>
                       <div className="h-14 bg-[#F5F3EF] border-none rounded-2xl flex items-center px-6">
@@ -227,6 +255,44 @@ export default function RegistrationForm() {
                     <FormMessage />
                   </FormItem>
                 )} />
+
+                {/* Conditional Fields based on Category */}
+                {category === "Umum" ? (
+                  <FormField control={form.control} name="nik" render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-[#80766E]">NIK (16 Digit)</FormLabel>
+                      <FormControl><Input placeholder="Masukkan 16 Digit NIK Anda" maxLength={16} {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                ) : (
+                  <>
+                    <FormField control={form.control} name="nipp" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[#80766E]">NIPP/NIK</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Contact className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
+                            <Input placeholder="Masukkan NIPP atau NIK Pegawai" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl pl-12" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="unitKerja" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[#80766E]">Unit Kerja</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
+                            <Input placeholder="Contoh: IT Support, Stasiun Sudirman, dll" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl pl-12" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </>
+                )}
               </div>
 
               <div className="space-y-6">
@@ -280,6 +346,7 @@ export default function RegistrationForm() {
                         <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
                           Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
                         </FormLabel>
+                        <FormLabel />
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -301,6 +368,7 @@ export default function RegistrationForm() {
                         <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
                           Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik berupa Nomor Induk Kependudukan guna keperluan donor darah, sesuai ketentuan perundang-undangan.
                         </FormLabel>
+                        <FormLabel />
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -322,6 +390,7 @@ export default function RegistrationForm() {
                         <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
                           Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
                         </FormLabel>
+                        <FormLabel />
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -354,7 +423,7 @@ export default function RegistrationForm() {
                             <h4 className="font-bold text-lg mb-3">1. Data Pribadi yang Kami Kumpulkan</h4>
                             <ul className="list-none space-y-1">
                               <li>a. Nama lengkap</li>
-                              <li>b. Nomor Induk Kependudukan (NIK)</li>
+                              <li>b. Nomor Induk Kependudukan (NIK) atau NIPP</li>
                               <li>c. Alamat email</li>
                               <li>d. Kategori peserta (Pegawai KCI / Umum)</li>
                               <li>e. Lokasi dan tanggal donor yang dipilih</li>

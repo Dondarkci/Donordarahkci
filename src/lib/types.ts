@@ -10,7 +10,9 @@ export type LocationOption = {
 export type ParticipantRegistration = {
   id: string;
   fullName: string;
-  nik: string;
+  nik?: string;
+  nipp?: string;
+  unitKerja?: string;
   email: string;
   category: string;
   eventSlotId: string;

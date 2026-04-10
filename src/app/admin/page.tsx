@@ -119,10 +119,11 @@ export default function AdminPage() {
       return;
     }
 
-    const headers = ["Nama Lengkap", "NIK", "Email", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
+    const headers = ["Nama Lengkap", "NIK/NIPP", "Unit Kerja", "Email", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
     const rows = registrations.map(r => [
       r.fullName,
-      `'${r.nik}`,
+      r.category === "Pegawai KCI" ? `'${r.nipp || ""}` : `'${r.nik || ""}`,
+      r.unitKerja || "-",
       r.email,
       r.category,
       r.locationName || "",
@@ -158,7 +159,8 @@ export default function AdminPage() {
 
   const filteredData = registrations?.filter(r => 
     r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.nik.includes(searchQuery) ||
+    (r.nik && r.nik.includes(searchQuery)) ||
+    (r.nipp && r.nipp.includes(searchQuery)) ||
     r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.category?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
@@ -362,7 +364,7 @@ export default function AdminPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative flex-1 max-w-[900px]">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
-              <Input placeholder="Cari nama, NIK, atau email..." className="pl-14 h-14 bg-[#F8F7F4] border-none rounded-2xl text-base" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <Input placeholder="Cari nama, ID, email, atau unit..." className="pl-14 h-14 bg-[#F8F7F4] border-none rounded-2xl text-base" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <div className="bg-white border border-[#E5E7EB] rounded-full px-6 py-2.5 shadow-sm">
               <span className="font-bold text-base text-[#2D241E]">Total: {filteredData.length} Orang</span>
@@ -374,7 +376,8 @@ export default function AdminPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Lengkap</TableHead>
-                  <TableHead>NIK</TableHead>
+                  <TableHead>ID (NIK/NIPP)</TableHead>
+                  <TableHead>Unit Kerja</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead>Lokasi</TableHead>
@@ -383,14 +386,17 @@ export default function AdminPage() {
               </TableHeader>
               <TableBody>
                 {isRegsLoading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
                 ) : filteredData.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
                   filteredData.map((reg) => (
                     <TableRow key={reg.id}>
                       <TableCell className="font-bold">{reg.fullName}</TableCell>
-                      <TableCell className="font-bold">{reg.nik}</TableCell>
+                      <TableCell className="font-bold">
+                        {reg.category === "Pegawai KCI" ? (reg.nipp || "-") : (reg.nik || "-")}
+                      </TableCell>
+                      <TableCell>{reg.unitKerja || "-"}</TableCell>
                       <TableCell>{reg.email}</TableCell>
                       <TableCell>
                         <span className={cn("px-2 py-1 rounded-full text-xs font-bold", reg.category === "Pegawai KCI" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
