@@ -173,7 +173,6 @@ export default function RegistrationForm() {
     form.reset();
   }
 
-  // Handle errors and open privacy policy if agreements are missing
   const onInvalid = (errors: any) => {
     if (errors.agreement1 || errors.agreement2 || errors.agreement3) {
       setIsPrivacyOpen(true);
@@ -291,7 +290,6 @@ export default function RegistrationForm() {
                   )} />
                 </div>
 
-                {/* Conditional Fields based on Category */}
                 {category === "Pegawai KCI" && (
                   <>
                     <FormField control={form.control} name="nipp" render={({ field }) => (
@@ -446,7 +444,6 @@ export default function RegistrationForm() {
                             <p className="font-bold text-primary mt-1">Email: dondar.kcj@kci.id</p>
                           </section>
 
-                          {/* Persetujuan Checkboxes moved inside modal */}
                           <div className="space-y-6 pt-6 border-t border-[#EAE7E2]">
                             <FormField
                               control={form.control}
@@ -541,27 +538,63 @@ export default function RegistrationForm() {
                       <ScrollArea className="max-h-[70vh] p-8 md:p-10">
                         <Accordion type="single" collapsible className="w-full space-y-4">
                           <AccordionItem value="item-1" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
-                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa saja syarat utama untuk menjadi pendonor darah?</AccordionTrigger>
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Siapa saja yang boleh mendonorkan darah?</AccordionTrigger>
                             <AccordionContent className="text-[#80766E] leading-relaxed">
-                              Syarat umum meliputi: Sehat jasmani dan rohani, usia 17-60 tahun, berat badan minimal 45 kg, suhu tubuh 36.6 - 37.5 C, tekanan darah sistolik 110-160 mmHg dan diastolik 70-100 mmHg, serta kadar hemoglobin minimal 12.5 g/dL.
+                              Pria atau wanita berusia 17–60 tahun (atau hingga 65 tahun dengan izin dokter), memiliki berat badan minimal 45 kg, dan dalam kondisi sehat jasmani.
                             </AccordionContent>
                           </AccordionItem>
                           <AccordionItem value="item-2" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
-                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Berapa lama proses donor darah berlangsung?</AccordionTrigger>
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa saja syarat kesehatan dasar untuk donor?</AccordionTrigger>
                             <AccordionContent className="text-[#80766E] leading-relaxed">
-                              Proses pengambilan darahnya sendiri biasanya hanya memakan waktu 8-10 menit. Namun, total waktu yang dibutuhkan dari pendaftaran, pemeriksaan kesehatan, hingga istirahat setelah donor sekitar 30-45 menit.
+                              Tekanan darah dan nadi normal, Kadar Hemoglobin (Hb): 12,5–17,0 g/dL.
                             </AccordionContent>
                           </AccordionItem>
                           <AccordionItem value="item-3" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
-                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa yang harus dipersiapkan sebelum mendonor?</AccordionTrigger>
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Berapa berat badan minimal yang diperbolehkan mendonorkan darah?</AccordionTrigger>
                             <AccordionContent className="text-[#80766E] leading-relaxed">
-                              Tidurlah yang cukup (minimal 5 jam), minum banyak air putih, makan makanan bergizi sekitar 3-4 jam sebelum donor, dan hindari aktivitas fisik berat atau konsumsi alkohol sebelum mendonor.
+                              Berat badan minimal 45 Kg.
                             </AccordionContent>
                           </AccordionItem>
                           <AccordionItem value="item-4" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
-                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Kapan saya bisa mendonor kembali?</AccordionTrigger>
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Bolehkah saya mendonor jika sedang minum obat?</AccordionTrigger>
                             <AccordionContent className="text-[#80766E] leading-relaxed">
-                              Jarak waktu minimal untuk donor darah lengkap (whole blood) adalah 60 hari atau sekitar 2 bulan sekali.
+                              Antibiotik harus menunggu 1 minggu setelah dosis terakhir, obat flu/analgetik/aspirin harus menunggu 3 hari.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-5" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Berapa lama jeda waktu minimal antar donor darah?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Jeda waktu minimal antar donor darah adalah 60 hari (2 bulan) untuk memastikan volume darah dan kadar zat besi kembali normal.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-6" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa yang harus saya lakukan sebelum mendonor?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Istirahat cukup (tidur minimal 5 jam), makan hidangan bergizi, minum banyak air putih untuk menjaga hidrasi, hindari aktivitas fisik berat dan konsumsi alkohol 24 jam sebelumnya.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-7" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa yang harus dilakukan setelah mendonor?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Beristirahat sejenak selama 10–15 menit, konsumsi makanan kecil/minuman yang disediakan, dan hindari mengangkat beban berat dengan lengan yang digunakan untuk donor selama beberapa jam.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-8" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Dokumen apa yang harus dibawa saat mendaftar?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Cukup membawa kartu identitas resmi yang masih berlaku (KTP/SIM/Paspor). Jika Anda pendonor rutin, disarankan membawa Kartu Donor.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-9" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Bagaimana cara mendaftar secara online?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Anda dapat mengakses situs resmi pendaftaran, mengisi formulir data diri, serta memilih jadwal dan lokasi donor yang tersedia. Setelah selesai, anda akan menerima notifikasi pendaftaran donor darah.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-10" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apakah saya bisa langsung datang ke lokasi (Walk-in) jika registrasi online sudah ditutup?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Bisa. Hubungi admin untuk ketersediaan kuota.
                             </AccordionContent>
                           </AccordionItem>
                         </Accordion>
