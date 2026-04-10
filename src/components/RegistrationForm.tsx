@@ -314,7 +314,7 @@ export default function RegistrationForm() {
                         <FormControl>
                           <div className="relative">
                             <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
-                            <Input placeholder="Contoh: IT Support, Stasiun Sudirman, dll" {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl pl-12" />
+                            <Input {...field} className="h-14 bg-[#F5F3EF] border-none rounded-2xl pl-12" />
                           </div>
                         </FormControl>
                         <FormMessage />
