@@ -553,14 +553,14 @@ export default function AdminPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama Lengkap</TableHead>
-                  <TableHead>ID (NIK/NIPP)</TableHead>
-                  <TableHead>Gol. Darah</TableHead>
-                  <TableHead>Unit Kerja</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Lokasi</TableHead>
-                  <TableHead>Waktu Daftar</TableHead>
+                  <TableHead className="text-center">Nama Lengkap</TableHead>
+                  <TableHead className="text-center">ID (NIK/NIPP)</TableHead>
+                  <TableHead className="text-center">Gol. Darah</TableHead>
+                  <TableHead className="text-center">Unit Kerja</TableHead>
+                  <TableHead className="text-center">Email</TableHead>
+                  <TableHead className="text-center">Kategori</TableHead>
+                  <TableHead className="text-center">Lokasi</TableHead>
+                  <TableHead className="text-center">Waktu Daftar</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -572,27 +572,27 @@ export default function AdminPage() {
                 ) : (
                   paginatedData.map((reg) => (
                     <TableRow key={reg.id}>
-                      <TableCell className="font-bold">{reg.fullName}</TableCell>
-                      <TableCell className="font-bold">
+                      <TableCell className="font-bold text-center">{reg.fullName}</TableCell>
+                      <TableCell className="font-bold text-center">
                         {reg.category === "Pegawai KCI" || reg.category === "Internal" ? (reg.nipp || "-") : (reg.nik || "-")}
                       </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-xs border border-red-100">
-                          {reg.bloodType || "-"}
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-[10px] md:text-xs border border-red-100 p-1 text-center leading-tight">
+                          {reg.bloodType === "Tidak pernah diperiksa" ? "N/A" : (reg.bloodType || "-")}
                         </span>
                       </TableCell>
-                      <TableCell>{reg.unitKerja || "-"}</TableCell>
-                      <TableCell>{reg.email}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">{reg.unitKerja || "-"}</TableCell>
+                      <TableCell className="text-center">{reg.email}</TableCell>
+                      <TableCell className="text-center">
                         <span className={cn("px-2 py-1 rounded-full text-xs font-bold", (reg.category === "Pegawai KCI" || reg.category === "Internal") ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
                           {reg.category === "Internal" ? "Pegawai KCI" : reg.category}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <div className="font-bold">{reg.locationName}</div>
                         <div className="text-[10px] text-[#80766E]">{reg.locationDate}</div>
                       </TableCell>
-                      <TableCell className="text-[#A09891] text-sm">
+                      <TableCell className="text-[#A09891] text-sm text-center">
                         {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
                       </TableCell>
                       <TableCell className="text-right">
