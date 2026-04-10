@@ -62,7 +62,7 @@ const formSchema = z.object({
   }
 });
 
-const BLOOD_TYPES = ["A", "B", "AB", "O", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const BLOOD_TYPES = ["A", "B", "AB", "O"];
 
 export default function RegistrationForm() {
   const db = useFirestore();
