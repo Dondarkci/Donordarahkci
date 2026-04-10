@@ -63,6 +63,7 @@ export default function RegistrationForm() {
   const { user } = useUser();
   const [submitted, setSubmitted] = useState(false);
   const [lastEntry, setLastEntry] = useState<any>(null);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   useEffect(() => {
     if (auth && !auth.currentUser) {
@@ -172,6 +173,18 @@ export default function RegistrationForm() {
     form.reset();
   }
 
+  // Handle errors and open privacy policy if agreements are missing
+  const onInvalid = (errors: any) => {
+    if (errors.agreement1 || errors.agreement2 || errors.agreement3) {
+      setIsPrivacyOpen(true);
+      toast({
+        title: "Persetujuan Diperlukan",
+        description: "Silakan baca dan setujui kebijakan privasi sebelum mendaftar.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (submitted && lastEntry) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
@@ -203,7 +216,7 @@ export default function RegistrationForm() {
       <Card className="border-none shadow-none bg-white rounded-[32px] overflow-hidden">
         <CardContent className="p-10">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-12">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                 <FormField control={form.control} name="fullName" render={({ field }) => (
                   <FormItem>
@@ -345,7 +358,7 @@ export default function RegistrationForm() {
 
               <div className="space-y-4">
                 <div className="pt-2 flex justify-center gap-6">
-                  <Dialog>
+                  <Dialog open={isPrivacyOpen} onOpenChange={setIsPrivacyOpen}>
                     <DialogTrigger asChild>
                       <button type="button" className="text-primary font-bold underline hover:opacity-70 transition-opacity">
                         Kebijakan Privasi
@@ -498,6 +511,15 @@ export default function RegistrationForm() {
                                 </FormItem>
                               )}
                             />
+                            <div className="pt-4">
+                              <Button 
+                                type="button" 
+                                onClick={() => setIsPrivacyOpen(false)}
+                                className="w-full bg-primary text-white rounded-xl font-bold h-12"
+                              >
+                                Lanjutkan Pendaftaran
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </ScrollArea>
