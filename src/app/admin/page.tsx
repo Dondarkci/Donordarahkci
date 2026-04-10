@@ -156,6 +156,7 @@ export default function AdminPage() {
         const regDateSecs = reg.registrationDate?.seconds || 0;
         const currentCount = slot.currentRegistrations || 0;
 
+        // Only decrement if registration is "new" (after last seed/reset)
         if (regDateSecs > slotUpdateSecs && currentCount > 0) {
           const slotRef = doc(db, "eventSlots", reg.eventSlotId);
           batch.update(slotRef, { 
@@ -262,7 +263,9 @@ export default function AdminPage() {
 
       // Check if location changed
       if (editRegSlotId !== editingReg.eventSlotId) {
+        const oldSlot = locations?.find(l => l.id === editingReg.eventSlotId);
         const newSlot = locations?.find(l => l.id === editRegSlotId);
+        
         if (newSlot) {
           updateData.eventSlotId = editRegSlotId;
           updateData.locationName = newSlot.locationName;
@@ -271,7 +274,18 @@ export default function AdminPage() {
           const oldSlotRef = doc(db, "eventSlots", editingReg.eventSlotId);
           const newSlotRef = doc(db, "eventSlots", editRegSlotId);
 
-          batch.update(oldSlotRef, { currentRegistrations: increment(-1) });
+          // Only decrement old slot if the registration was done after the last reset/seed
+          if (oldSlot) {
+            const oldSlotUpdateSecs = oldSlot.updatedAt?.seconds || 0;
+            const regDateSecs = editingReg.registrationDate?.seconds || 0;
+            const currentCount = oldSlot.currentRegistrations || 0;
+            
+            if (regDateSecs > oldSlotUpdateSecs && currentCount > 0) {
+              batch.update(oldSlotRef, { currentRegistrations: increment(-1) });
+            }
+          }
+
+          // Always increment new slot because this registration now takes a current slot
           batch.update(newSlotRef, { currentRegistrations: increment(1) });
         }
       }
@@ -798,4 +812,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
