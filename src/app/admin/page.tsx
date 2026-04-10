@@ -1,12 +1,13 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Registration, LocationOption } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,8 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
 
+const ITEMS_PER_PAGE = 50;
+
 export default function AdminPage() {
   const db = useFirestore();
   const auth = useAuth();
@@ -28,6 +31,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -180,11 +184,11 @@ export default function AdminPage() {
     const headers = ["Nama Lengkap", "NIK/NIPP", "Unit Kerja", "Email", "Gol. Darah", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
     const rows = filteredData.map(r => [
       r.fullName,
-      r.category === "Pegawai KCI" ? `'${r.nipp || ""}` : `'${r.nik || ""}`,
+      r.category === "Pegawai KCI" || r.category === "Internal" ? `'${r.nipp || ""}` : `'${r.nik || ""}`,
       r.unitKerja || "-",
       r.email,
       r.bloodType || "-",
-      r.category,
+      r.category === "Internal" ? "Pegawai KCI" : r.category,
       r.locationName || "",
       r.locationDate || "",
       r.registrationDate ? new Date(r.registrationDate.seconds * 1000).toLocaleString('id-ID') : ""
@@ -232,7 +236,8 @@ export default function AdminPage() {
     setEditRegName(reg.fullName);
     setEditRegEmail(reg.email);
     setEditRegUnit(reg.unitKerja || "");
-    setEditRegIdNumber(reg.category === "Pegawai KCI" ? (reg.nipp || "") : (reg.nik || ""));
+    const idNum = (reg.category === "Pegawai KCI" || reg.category === "Internal") ? (reg.nipp || "") : (reg.nik || "");
+    setEditRegIdNumber(idNum);
     setEditRegSlotId(reg.eventSlotId);
   };
 
@@ -248,7 +253,7 @@ export default function AdminPage() {
         updatedAt: serverTimestamp()
       };
 
-      if (editingReg.category === "Pegawai KCI") {
+      if (editingReg.category === "Pegawai KCI" || editingReg.category === "Internal") {
         updateData.nipp = editRegIdNumber;
         updateData.unitKerja = editRegUnit;
       } else {
@@ -309,6 +314,16 @@ export default function AdminPage() {
       const timeB = b.registrationDate?.seconds || 0;
       return timeB - timeA;
     });
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, startDate, endDate]);
 
   if (isUserLoading || (user && isAdminCheckLoading)) {
     return (
@@ -538,14 +553,14 @@ export default function AdminPage() {
               <TableBody>
                 {isRegsLoading ? (
                   <TableRow><TableCell colSpan={9} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
-                ) : filteredData.length === 0 ? (
+                ) : paginatedData.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
-                  filteredData.map((reg) => (
+                  paginatedData.map((reg) => (
                     <TableRow key={reg.id}>
                       <TableCell className="font-bold">{reg.fullName}</TableCell>
                       <TableCell className="font-bold">
-                        {reg.category === "Pegawai KCI" ? (reg.nipp || "-") : (reg.nik || "-")}
+                        {reg.category === "Pegawai KCI" || reg.category === "Internal" ? (reg.nipp || "-") : (reg.nik || "-")}
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-xs border border-red-100">
@@ -555,8 +570,8 @@ export default function AdminPage() {
                       <TableCell>{reg.unitKerja || "-"}</TableCell>
                       <TableCell>{reg.email}</TableCell>
                       <TableCell>
-                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold", reg.category === "Pegawai KCI" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
-                          {reg.category}
+                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold", (reg.category === "Pegawai KCI" || reg.category === "Internal") ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
+                          {reg.category === "Internal" ? "Pegawai KCI" : reg.category}
                         </span>
                       </TableCell>
                       <TableCell className="font-bold">{reg.locationName}</TableCell>
@@ -615,6 +630,75 @@ export default function AdminPage() {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-[#F5F3EF]">
+              <div className="text-sm text-[#80766E] font-medium order-2 md:order-1">
+                Menampilkan <span className="font-bold text-[#2D241E]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="font-bold text-[#2D241E]">{Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)}</span> dari <span className="font-bold text-[#2D241E]">{filteredData.length}</span> pendaftar
+              </div>
+              <div className="flex items-center gap-2 order-1 md:order-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                  className="rounded-xl h-10 px-3 font-bold border-none bg-[#F8F7F4] hover:bg-primary/5 hover:text-primary transition-colors disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Sebelum
+                </Button>
+                
+                <div className="hidden sm:flex items-center gap-1 mx-2">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    // Show current page, first, last, and pages around current
+                    if (
+                      pageNum === 1 || 
+                      pageNum === totalPages || 
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={cn(
+                            "h-10 w-10 rounded-xl font-bold transition-all",
+                            currentPage === pageNum 
+                              ? "bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20" 
+                              : "text-[#80766E] hover:bg-primary/5 hover:text-primary"
+                          )}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    } else if (
+                      (pageNum === 2 && currentPage > 3) || 
+                      (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                    ) {
+                      return <span key={pageNum} className="px-1 text-[#80766E]">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <div className="sm:hidden font-bold text-sm bg-primary/5 text-primary px-4 py-2 rounded-xl">
+                  {currentPage} / {totalPages}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  className="rounded-xl h-10 px-3 font-bold border-none bg-[#F8F7F4] hover:bg-primary/5 hover:text-primary transition-colors disabled:opacity-30"
+                >
+                  Lanjut <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -676,10 +760,10 @@ export default function AdminPage() {
               <Input type="email" value={editRegEmail} onChange={(e) => setEditRegEmail(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-bold">{editingReg?.category === "Pegawai KCI" ? "NIPP/NIK" : "NIK"}</Label>
+              <Label className="text-sm font-bold">{(editingReg?.category === "Pegawai KCI" || editingReg?.category === "Internal") ? "NIPP/NIK" : "NIK"}</Label>
               <Input value={editRegIdNumber} onChange={(e) => setEditRegIdNumber(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
             </div>
-            {editingReg?.category === "Pegawai KCI" && (
+            {(editingReg?.category === "Pegawai KCI" || editingReg?.category === "Internal") && (
               <div className="space-y-2">
                 <Label className="text-sm font-bold">Unit Kerja</Label>
                 <Input value={editRegUnit} onChange={(e) => setEditRegUnit(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
@@ -714,3 +798,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
