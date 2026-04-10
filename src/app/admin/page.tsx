@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser, useDoc } from "@/firebase";
@@ -45,6 +46,7 @@ export default function AdminPage() {
   const [editRegEmail, setEditRegEmail] = useState("");
   const [editRegUnit, setEditRegUnit] = useState("");
   const [editRegIdNumber, setEditRegIdNumber] = useState(""); // NIK or NIPP
+  const [editRegSlotId, setEditRegSlotId] = useState("");
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -98,16 +100,13 @@ export default function AdminPage() {
 
       const batch = writeBatch(db);
       
-      // 1. Ambil semua lokasi yang ada dan hapus/reset agar tidak ada data "sampah"
       const currentSlotsSnap = await getDocs(collection(db, "eventSlots"));
       currentSlotsSnap.forEach((d) => {
-        // Jika dokumen tidak ada dalam list initialSlots, hapus saja agar bersih
         if (!initialSlots.find(s => s.id === d.id)) {
           batch.delete(d.ref);
         }
       });
 
-      // 2. Setel ulang atau buat lokasi baru dari list initial
       initialSlots.forEach(slot => {
         const ref = doc(db, "eventSlots", slot.id);
         batch.set(ref, { 
@@ -154,8 +153,6 @@ export default function AdminPage() {
         const regDateSecs = reg.registrationDate?.seconds || 0;
         const currentCount = slot.currentRegistrations || 0;
 
-        // Hanya kurangi kuota jika pendaftaran dilakukan SETELAH seed terakhir
-        // dan pastikan kuota tidak menjadi negatif
         if (regDateSecs > slotUpdateSecs && currentCount > 0) {
           const slotRef = doc(db, "eventSlots", reg.eventSlotId);
           batch.update(slotRef, { 
@@ -237,12 +234,14 @@ export default function AdminPage() {
     setEditRegEmail(reg.email);
     setEditRegUnit(reg.unitKerja || "");
     setEditRegIdNumber(reg.category === "Pegawai KCI" ? (reg.nipp || "") : (reg.nik || ""));
+    setEditRegSlotId(reg.eventSlotId);
   };
 
   const handleSaveReg = async () => {
     if (!editingReg) return;
     try {
       const regRef = doc(db, "users", editingReg.githubUserId, "registrations", editingReg.id);
+      const batch = writeBatch(db);
       
       const updateData: any = {
         fullName: editRegName,
@@ -257,7 +256,27 @@ export default function AdminPage() {
         updateData.nik = editRegIdNumber;
       }
 
-      await updateDoc(regRef, updateData);
+      // Check if location changed
+      if (editRegSlotId !== editingReg.eventSlotId) {
+        const newSlot = locations?.find(l => l.id === editRegSlotId);
+        if (newSlot) {
+          updateData.eventSlotId = editRegSlotId;
+          updateData.locationName = newSlot.locationName;
+          updateData.locationDate = newSlot.eventDate;
+
+          // Only adjust quotas for the same "session/seed" context
+          // or just always adjust if we trust current numbers
+          const oldSlotRef = doc(db, "eventSlots", editingReg.eventSlotId);
+          const newSlotRef = doc(db, "eventSlots", editRegSlotId);
+
+          batch.update(oldSlotRef, { currentRegistrations: increment(-1) });
+          batch.update(newSlotRef, { currentRegistrations: increment(1) });
+        }
+      }
+
+      batch.update(regRef, updateData);
+      await batch.commit();
+
       setEditingReg(null);
       toast({ title: "Data Pendaftar Berhasil Diperbarui" });
     } catch (e) {
@@ -663,6 +682,25 @@ export default function AdminPage() {
                 <Input value={editRegUnit} onChange={(e) => setEditRegUnit(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
               </div>
             )}
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">Lokasi & Waktu Kegiatan</Label>
+              <Select value={editRegSlotId} onValueChange={setEditRegSlotId}>
+                <SelectTrigger className="h-12 bg-[#F8F7F4] border-none rounded-xl">
+                  <SelectValue placeholder="Pilih Lokasi" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-none shadow-xl">
+                  {locations?.filter(l => l.locationName).map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id} className="rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3 w-3 text-primary" />
+                        <span>{loc.locationName} - {loc.eventDate}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditingReg(null)} className="h-12 rounded-xl border-none bg-[#F8F7F4]">Batal</Button>
