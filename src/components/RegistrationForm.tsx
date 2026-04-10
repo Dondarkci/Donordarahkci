@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LocationOption } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Droplet, Check, X, Mail, ShieldCheck, Briefcase, Contact } from "lucide-react";
+import { MapPin, Droplet, Check, X, Mail, ShieldCheck, Briefcase, Contact, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, increment, serverTimestamp } from "firebase/firestore";
@@ -22,6 +22,7 @@ import { signInAnonymously } from "firebase/auth";
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
@@ -343,74 +344,7 @@ export default function RegistrationForm() {
               </div>
 
               <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="agreement1"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 px-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="mt-1 h-6 w-6 rounded-lg"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-tight">
-                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
-                          Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
-                        </FormLabel>
-                        <FormLabel />
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="agreement2"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 px-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="mt-1 h-6 w-6 rounded-lg"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-tight">
-                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
-                          Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik berupa Nomor Induk Kependudukan guna keperluan donor darah, sesuai ketentuan perundang-undangan.
-                        </FormLabel>
-                        <FormLabel />
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="agreement3"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0 px-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="mt-1 h-6 w-6 rounded-lg"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-tight">
-                        <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
-                          Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
-                        </FormLabel>
-                        <FormLabel />
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="pt-2 flex justify-center">
+                <div className="pt-2 flex justify-center gap-6">
                   <Dialog>
                     <DialogTrigger asChild>
                       <button type="button" className="text-primary font-bold underline hover:opacity-70 transition-opacity">
@@ -498,7 +432,117 @@ export default function RegistrationForm() {
                             <p>Untuk pertanyaan, Anda dapat menghubungi:</p>
                             <p className="font-bold text-primary mt-1">Email: dondar.kcj@kci.id</p>
                           </section>
+
+                          {/* Persetujuan Checkboxes moved inside modal */}
+                          <div className="space-y-6 pt-6 border-t border-[#EAE7E2]">
+                            <FormField
+                              control={form.control}
+                              name="agreement1"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-4 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      className="mt-1 h-6 w-6 rounded-lg"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-tight">
+                                    <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
+                                      Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
+                                    </FormLabel>
+                                    <FormMessage />
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="agreement2"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-4 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      className="mt-1 h-6 w-6 rounded-lg"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-tight">
+                                    <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
+                                      Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik berupa Nomor Induk Kependudukan guna keperluan donor darah, sesuai ketentuan perundang-undangan.
+                                    </FormLabel>
+                                    <FormMessage />
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="agreement3"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-4 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      className="mt-1 h-6 w-6 rounded-lg"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-tight">
+                                    <FormLabel className="text-[14px] text-[#2D241E] font-normal cursor-pointer text-justify font-body">
+                                      Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
+                                    </FormLabel>
+                                    <FormMessage />
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button type="button" className="text-primary font-bold underline hover:opacity-70 transition-opacity">
+                        FAQ
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl w-[90vw] rounded-[32px] overflow-hidden p-0 border-none">
+                      <DialogHeader className="p-8 bg-primary text-white">
+                        <DialogTitle className="text-3xl font-headline font-bold flex items-center gap-3">
+                          <HelpCircle className="h-8 w-8" /> FAQ - Tanya Jawab
+                        </DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="max-h-[70vh] p-8 md:p-10">
+                        <Accordion type="single" collapsible className="w-full space-y-4">
+                          <AccordionItem value="item-1" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa saja syarat utama untuk menjadi pendonor darah?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Syarat umum meliputi: Sehat jasmani dan rohani, usia 17-60 tahun, berat badan minimal 45 kg, suhu tubuh 36.6 - 37.5 C, tekanan darah sistolik 110-160 mmHg dan diastolik 70-100 mmHg, serta kadar hemoglobin minimal 12.5 g/dL.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-2" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Berapa lama proses donor darah berlangsung?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Proses pengambilan darahnya sendiri biasanya hanya memakan waktu 8-10 menit. Namun, total waktu yang dibutuhkan dari pendaftaran, pemeriksaan kesehatan, hingga istirahat setelah donor sekitar 30-45 menit.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-3" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Apa yang harus dipersiapkan sebelum mendonor?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Tidurlah yang cukup (minimal 5 jam), minum banyak air putih, makan makanan bergizi sekitar 3-4 jam sebelum donor, dan hindari aktivitas fisik berat atau konsumsi alkohol sebelum mendonor.
+                            </AccordionContent>
+                          </AccordionItem>
+                          <AccordionItem value="item-4" className="border-none bg-[#F8F7F4] rounded-2xl px-6">
+                            <AccordionTrigger className="text-left font-bold text-[#2D241E] hover:no-underline">Kapan saya bisa mendonor kembali?</AccordionTrigger>
+                            <AccordionContent className="text-[#80766E] leading-relaxed">
+                              Jarak waktu minimal untuk donor darah lengkap (whole blood) adalah 60 hari atau sekitar 2 bulan sekali.
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </ScrollArea>
                     </DialogContent>
                   </Dialog>
