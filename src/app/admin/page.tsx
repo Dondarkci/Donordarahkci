@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,7 @@ export default function AdminPage() {
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
+  const [isResettingLocCount, setIsResettingLocCount] = useState(false);
 
   // Editing Registration State
   const [editingReg, setEditingReg] = useState<Registration | null>(null);
@@ -96,6 +97,17 @@ export default function AdminPage() {
       ];
 
       const batch = writeBatch(db);
+      
+      // 1. Ambil semua lokasi yang ada dan hapus/reset agar tidak ada data "sampah"
+      const currentSlotsSnap = await getDocs(collection(db, "eventSlots"));
+      currentSlotsSnap.forEach((d) => {
+        // Jika dokumen tidak ada dalam list initialSlots, hapus saja agar bersih
+        if (!initialSlots.find(s => s.id === d.id)) {
+          batch.delete(d.ref);
+        }
+      });
+
+      // 2. Setel ulang atau buat lokasi baru dari list initial
       initialSlots.forEach(slot => {
         const ref = doc(db, "eventSlots", slot.id);
         batch.set(ref, { 
@@ -104,10 +116,11 @@ export default function AdminPage() {
           updatedAt: serverTimestamp() 
         });
       });
+      
       await batch.commit();
-
-      toast({ title: "Seed Berhasil", description: "Lokasi direset dan kalkulasi data lama diputus." });
+      toast({ title: "Seed Berhasil", description: "Lokasi direset dan data lama dibersihkan." });
     } catch (e) {
+      console.error(e);
       toast({ title: "Gagal Menambah Data", variant: "destructive" });
     }
   };
@@ -132,21 +145,17 @@ export default function AdminPage() {
     try {
       const batch = writeBatch(db);
       
-      // 1. Cari slot terkait
       const slot = locations?.find(l => l.id === reg.eventSlotId);
-      
-      // 2. Hapus pendaftaran
       const regRef = doc(db, "users", reg.githubUserId, "registrations", reg.id);
       batch.delete(regRef);
       
-      // 3. Logika pemutusan kalkulasi:
-      // Hanya kurangi kuota jika pendaftaran dilakukan SETELAH seed terakhir dilakukan
-      // dan pastikan jumlah registrasi di slot > 0 agar tidak menjadi negatif.
       if (slot) {
         const slotUpdateSecs = slot.updatedAt?.seconds || 0;
         const regDateSecs = reg.registrationDate?.seconds || 0;
         const currentCount = slot.currentRegistrations || 0;
 
+        // Hanya kurangi kuota jika pendaftaran dilakukan SETELAH seed terakhir
+        // dan pastikan kuota tidak menjadi negatif
         if (regDateSecs > slotUpdateSecs && currentCount > 0) {
           const slotRef = doc(db, "eventSlots", reg.eventSlotId);
           batch.update(slotRef, { 
@@ -202,13 +211,20 @@ export default function AdminPage() {
     if (!editingLoc) return;
     try {
       const slotRef = doc(db, "eventSlots", editingLoc.id);
-      await updateDoc(slotRef, { 
+      const updateData: any = { 
         locationName: newName,
         eventDate: newDate,
         maxQuota: newCapacity, 
         updatedAt: serverTimestamp() 
-      });
+      };
+
+      if (isResettingLocCount) {
+        updateData.currentRegistrations = 0;
+      }
+
+      await updateDoc(slotRef, updateData);
       setEditingLoc(null);
+      setIsResettingLocCount(false);
       toast({ title: "Data Lokasi Diperbarui" });
     } catch (e) {
       toast({ title: "Gagal Update", variant: "destructive" });
@@ -412,7 +428,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {isLocsLoading ? <p className="col-span-full text-center py-10">Memuat lokasi...</p> : 
           locations?.map((loc) => {
-            const count = loc.currentRegistrations || 0;
+            const count = Math.max(loc.currentRegistrations || 0, 0);
             const percentage = Math.min((count / loc.maxQuota) * 100, 100);
             return (
               <Card key={loc.id} className="border-none shadow-sm rounded-2xl relative overflow-hidden bg-white">
@@ -420,10 +436,10 @@ export default function AdminPage() {
                 <CardContent className="p-5 space-y-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0 pr-2">
-                      <h3 className="font-bold text-[16px] text-[#2D241E] truncate">{loc.locationName}</h3>
+                      <h3 className="font-bold text-[16px] text-[#2D241E] truncate">{loc.locationName || "Tanpa Nama"}</h3>
                       <p className="text-xs text-[#80766E]">{loc.eventDate}</p>
                     </div>
-                    <button onClick={() => { setEditingLoc(loc); setNewName(loc.locationName); setNewDate(loc.eventDate); setNewCapacity(loc.maxQuota); }} className="p-1.5 hover:bg-muted rounded-full shrink-0">
+                    <button onClick={() => { setEditingLoc(loc); setNewName(loc.locationName); setNewDate(loc.eventDate); setNewCapacity(loc.maxQuota); setIsResettingLocCount(false); }} className="p-1.5 hover:bg-muted rounded-full shrink-0">
                       <SlidersHorizontal className="h-4 w-4 text-[#80766E]/60" />
                     </button>
                   </div>
@@ -598,6 +614,21 @@ export default function AdminPage() {
             <div className="space-y-2">
               <Label className="text-sm font-bold">Kapasitas</Label>
               <Input type="number" value={newCapacity} onChange={(e) => setNewCapacity(parseInt(e.target.value) || 0)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+            </div>
+            
+            <div className="pt-2">
+              <Button 
+                variant="outline" 
+                type="button"
+                onClick={() => setIsResettingLocCount(!isResettingLocCount)}
+                className={cn("w-full h-12 rounded-xl border-dashed gap-2 transition-colors", isResettingLocCount ? "border-primary text-primary bg-primary/5" : "border-[#E5E7EB] text-[#80766E]")}
+              >
+                <RotateCcw className={cn("h-4 w-4", isResettingLocCount && "animate-spin")} />
+                {isResettingLocCount ? "Batal Reset Pendaftar" : "Reset Jumlah Pendaftar ke 0"}
+              </Button>
+              {isResettingLocCount && (
+                <p className="text-[10px] text-primary mt-2 px-2">*Jumlah pendaftar akan di-nolkan setelah Anda klik Simpan.</p>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2">
