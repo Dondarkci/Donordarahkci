@@ -588,7 +588,10 @@ export default function AdminPage() {
                           {reg.category === "Internal" ? "Pegawai KCI" : reg.category}
                         </span>
                       </TableCell>
-                      <TableCell className="font-bold">{reg.locationName}</TableCell>
+                      <TableCell>
+                        <div className="font-bold">{reg.locationName}</div>
+                        <div className="text-[10px] text-[#80766E]">{reg.locationDate}</div>
+                      </TableCell>
                       <TableCell className="text-[#A09891] text-sm">
                         {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
                       </TableCell>
