@@ -381,10 +381,12 @@ export default function RegistrationForm() {
                             <h4 className="font-bold text-lg mb-3">1. Data Pribadi yang Kami Kumpulkan</h4>
                             <ul className="list-none space-y-1">
                               <li>a. Nama lengkap</li>
-                              <li>b. Nomor Induk Kependudukan (NIK) atau NIPP</li>
-                              <li>c. Alamat email</li>
-                              <li>d. Kategori peserta (Pegawai KCI / Umum)</li>
-                              <li>e. Lokasi dan tanggal donor yang dipilih</li>
+                              <li>b. Alamat Email</li>
+                              <li>c. Kategori peserta (Pegawai KCI / Umum)</li>
+                              <li>d. Golongan darah</li>
+                              <li>e. NIPP atau NIK</li>
+                              <li>f. Unit kerja</li>
+                              <li>g. Lokasi dan tanggal donor yang dipilih</li>
                             </ul>
                           </section>
 
