@@ -205,15 +205,15 @@ export default function AdminPage() {
   };
 
   const handleSaveLocation = async () => {
-    if (!newName || !newDate || newCapacity < 0) {
-      toast({ title: "Data Tidak Valid", variant: "destructive" });
+    if (newCapacity < 0) {
+      toast({ title: "Kapasitas tidak valid", variant: "destructive" });
       return;
     }
     if (!editingLoc) return;
     try {
       const slotRef = doc(db, "eventSlots", editingLoc.id);
       const updateData: any = { 
-        locationName: newName,
+        locationName: newName.trim(),
         eventDate: newDate,
         maxQuota: newCapacity, 
         updatedAt: serverTimestamp() 
@@ -488,9 +488,9 @@ export default function AdminPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0 pr-2">
                       <h3 className="font-bold text-[16px] text-[#2D241E] truncate">{loc.locationName || "Tanpa Nama"}</h3>
-                      <p className="text-xs text-[#80766E]">{loc.eventDate}</p>
+                      <p className="text-xs text-[#80766E]">{loc.eventDate || "Tanpa Tanggal"}</p>
                     </div>
-                    <button onClick={() => { setEditingLoc(loc); setNewName(loc.locationName); setNewDate(loc.eventDate); setNewCapacity(loc.maxQuota); setIsResettingLocCount(false); }} className="p-1.5 hover:bg-muted rounded-full shrink-0">
+                    <button onClick={() => { setEditingLoc(loc); setNewName(loc.locationName || ""); setNewDate(loc.eventDate || ""); setNewCapacity(loc.maxQuota); setIsResettingLocCount(false); }} className="p-1.5 hover:bg-muted rounded-full shrink-0">
                       <SlidersHorizontal className="h-4 w-4 text-[#80766E]/60" />
                     </button>
                   </div>
@@ -728,7 +728,7 @@ export default function AdminPage() {
           <div className="py-6 space-y-5">
             <div className="space-y-2">
               <Label className="text-sm font-bold">Nama Lokasi</Label>
-              <Input value={newName} onChange={(e) => setNewName(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Boleh dikosongkan untuk menonaktifkan" className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-bold">Tanggal Event</Label>
@@ -810,7 +810,7 @@ export default function AdminPage() {
                           <SelectItem key={loc.id} value={loc.id} className="rounded-lg">
                             <div className="flex items-center gap-2">
                               <MapPin className="h-3 w-3 text-primary" />
-                              <span>{loc.locationName} - {loc.eventDate}</span>
+                              <span>{loc.locationName} - {loc.eventDate || "Tanpa Tanggal"}</span>
                             </div>
                           </SelectItem>
                         ))}
