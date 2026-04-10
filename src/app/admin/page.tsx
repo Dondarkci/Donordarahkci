@@ -573,7 +573,7 @@ export default function AdminPage() {
                 ) : (
                   paginatedData.map((reg) => (
                     <TableRow key={reg.id}>
-                      <TableCell className="font-bold text-center">{reg.fullName}</TableCell>
+                      <TableCell className="font-bold text-center capitalize">{reg.fullName}</TableCell>
                       <TableCell className="font-bold text-center">
                         {/* Use NIPP as primary, but fallback to NIK for old data where category might mismatch or be mixed */}
                         {(reg.nipp || reg.nik || "-")}
