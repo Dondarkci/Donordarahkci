@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LocationOption } from "@/lib/types";
@@ -26,6 +27,7 @@ const formSchema = z.object({
   fullName: z.string().min(3, { message: "Nama lengkap harus diisi" }),
   email: z.string().email({ message: "Email tidak valid" }),
   category: z.enum(["Pegawai KCI", "Umum"], { required_error: "Pilih kategori peserta" }),
+  bloodType: z.string({ required_error: "Pilih golongan darah" }),
   nik: z.string().optional(),
   nipp: z.string().optional(),
   unitKerja: z.string().optional(),
@@ -60,6 +62,8 @@ const formSchema = z.object({
   }
 });
 
+const BLOOD_TYPES = ["A", "B", "AB", "O", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
 export default function RegistrationForm() {
   const db = useFirestore();
   const auth = useAuth();
@@ -83,7 +87,8 @@ export default function RegistrationForm() {
     defaultValues: {
       fullName: "",
       email: "",
-      category: "Umum",
+      category: "Pegawai KCI",
+      bloodType: "",
       nik: "",
       nipp: "",
       unitKerja: "",
@@ -141,6 +146,7 @@ export default function RegistrationForm() {
       unitKerja: values.category === "Pegawai KCI" ? values.unitKerja : "",
       email: values.email,
       category: values.category,
+      bloodType: values.bloodType,
       eventSlotId: values.eventSlotId,
       locationName: selectedLoc.locationName || "Lokasi Tidak Diketahui",
       locationDate: selectedLoc.eventDate || "Tanggal Tidak Diketahui",
@@ -227,34 +233,57 @@ export default function RegistrationForm() {
                   </FormItem>
                 )} />
 
-                <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem className="space-y-2 md:col-span-2">
-                    <FormLabel className="text-[#80766E]">Kategori</FormLabel>
-                    <FormControl>
-                      <div className="h-14 bg-[#F5F3EF] border-none rounded-2xl flex items-center px-6">
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-row space-x-8"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Pegawai KCI" className="h-5 w-5 border-primary text-primary" />
-                            </FormControl>
-                            <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Pegawai KCI</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Umum" className="h-5 w-5 border-primary text-primary" />
-                            </FormControl>
-                            <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Umum</FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                  <FormField control={form.control} name="category" render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[#80766E]">Kategori</FormLabel>
+                      <FormControl>
+                        <div className="h-14 bg-[#F5F3EF] border-none rounded-2xl flex items-center px-6">
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-row space-x-8"
+                          >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="Pegawai KCI" className="h-5 w-5 border-primary text-primary" />
+                              </FormControl>
+                              <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Pegawai KCI</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="Umum" className="h-5 w-5 border-primary text-primary" />
+                              </FormControl>
+                              <FormLabel className="font-normal text-base cursor-pointer text-[#2D241E]">Umum</FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField control={form.control} name="bloodType" render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-[#80766E]">Golongan Darah</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-14 bg-[#F5F3EF] border-none rounded-2xl">
+                            <SelectValue placeholder="Pilih Golongan Darah" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-2xl border-none shadow-xl">
+                          {BLOOD_TYPES.map((type) => (
+                            <SelectItem key={type} value={type} className="rounded-lg">
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
 
                 {/* Conditional Fields based on Category */}
                 {category === "Umum" ? (

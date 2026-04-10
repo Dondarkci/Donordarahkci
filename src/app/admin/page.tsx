@@ -119,12 +119,13 @@ export default function AdminPage() {
       return;
     }
 
-    const headers = ["Nama Lengkap", "NIK/NIPP", "Unit Kerja", "Email", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
+    const headers = ["Nama Lengkap", "NIK/NIPP", "Unit Kerja", "Email", "Gol. Darah", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
     const rows = registrations.map(r => [
       r.fullName,
       r.category === "Pegawai KCI" ? `'${r.nipp || ""}` : `'${r.nik || ""}`,
       r.unitKerja || "-",
       r.email,
+      r.bloodType || "-",
       r.category,
       r.locationName || "",
       r.locationDate || "",
@@ -377,6 +378,7 @@ export default function AdminPage() {
                 <TableRow>
                   <TableHead>Nama Lengkap</TableHead>
                   <TableHead>ID (NIK/NIPP)</TableHead>
+                  <TableHead>Gol. Darah</TableHead>
                   <TableHead>Unit Kerja</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Kategori</TableHead>
@@ -386,15 +388,20 @@ export default function AdminPage() {
               </TableHeader>
               <TableBody>
                 {isRegsLoading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
                 ) : filteredData.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
                   filteredData.map((reg) => (
                     <TableRow key={reg.id}>
                       <TableCell className="font-bold">{reg.fullName}</TableCell>
                       <TableCell className="font-bold">
                         {reg.category === "Pegawai KCI" ? (reg.nipp || "-") : (reg.nik || "-")}
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-xs border border-red-100">
+                          {reg.bloodType || "-"}
+                        </span>
                       </TableCell>
                       <TableCell>{reg.unitKerja || "-"}</TableCell>
                       <TableCell>{reg.email}</TableCell>

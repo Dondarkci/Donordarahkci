@@ -15,6 +15,7 @@ export type ParticipantRegistration = {
   unitKerja?: string;
   email: string;
   category: string;
+  bloodType: string;
   eventSlotId: string;
   registrationDate: any;
   githubUserId: string;
