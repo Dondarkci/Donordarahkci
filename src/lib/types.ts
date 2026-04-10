@@ -5,6 +5,8 @@ export type LocationOption = {
   eventDate: string;
   maxQuota: number;
   currentRegistrations: number;
+  updatedAt?: any;
+  createdAt?: any;
 };
 
 export type ParticipantRegistration = {

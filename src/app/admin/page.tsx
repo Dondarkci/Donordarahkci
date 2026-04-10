@@ -98,11 +98,15 @@ export default function AdminPage() {
       const batch = writeBatch(db);
       initialSlots.forEach(slot => {
         const ref = doc(db, "eventSlots", slot.id);
-        batch.set(ref, { ...slot, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+        batch.set(ref, { 
+          ...slot, 
+          createdAt: serverTimestamp(), 
+          updatedAt: serverTimestamp() 
+        });
       });
       await batch.commit();
 
-      toast({ title: "Data Berhasil Ditambahkan" });
+      toast({ title: "Seed Berhasil", description: "Lokasi direset dan kalkulasi data lama diputus." });
     } catch (e) {
       toast({ title: "Gagal Menambah Data", variant: "destructive" });
     }
@@ -115,7 +119,7 @@ export default function AdminPage() {
       regsSnap.forEach((d) => batch.delete(d.ref));
 
       const slotsSnap = await getDocs(collection(db, "eventSlots"));
-      slotsSnap.forEach((d) => batch.update(d.ref, { currentRegistrations: 0 }));
+      slotsSnap.forEach((d) => batch.update(d.ref, { currentRegistrations: 0, updatedAt: serverTimestamp() }));
 
       await batch.commit();
       toast({ title: "Data Berhasil Dihapus" });
@@ -128,20 +132,33 @@ export default function AdminPage() {
     try {
       const batch = writeBatch(db);
       
-      // 1. Hapus pendaftaran
+      // 1. Cari slot terkait
+      const slot = locations?.find(l => l.id === reg.eventSlotId);
+      
+      // 2. Hapus pendaftaran
       const regRef = doc(db, "users", reg.githubUserId, "registrations", reg.id);
       batch.delete(regRef);
       
-      // 2. Kurangi jumlah pendaftar di slot (menambah kuota tersisa)
-      const slotRef = doc(db, "eventSlots", reg.eventSlotId);
-      batch.update(slotRef, { 
-        currentRegistrations: increment(-1) 
-      });
+      // 3. Logika pemutusan kalkulasi:
+      // Hanya kurangi kuota jika pendaftaran dilakukan SETELAH seed terakhir dilakukan
+      // dan pastikan jumlah registrasi di slot > 0 agar tidak menjadi negatif.
+      if (slot) {
+        const slotUpdateSecs = slot.updatedAt?.seconds || 0;
+        const regDateSecs = reg.registrationDate?.seconds || 0;
+        const currentCount = slot.currentRegistrations || 0;
+
+        if (regDateSecs > slotUpdateSecs && currentCount > 0) {
+          const slotRef = doc(db, "eventSlots", reg.eventSlotId);
+          batch.update(slotRef, { 
+            currentRegistrations: increment(-1) 
+          });
+        }
+      }
       
       await batch.commit();
       toast({ 
         title: "Pendaftar Berhasil Dihapus", 
-        description: `Data ${reg.fullName} telah dihapus dan kuota telah dikembalikan.` 
+        description: `Data ${reg.fullName} telah dihapus.` 
       });
     } catch (e) {
       console.error(e);
@@ -538,7 +555,7 @@ export default function AdminPage() {
                                 </AlertDialogTitle>
                                 <AlertDialogDescription className="text-[#80766E] text-base">
                                   Apakah Anda yakin ingin menghapus data <strong>{reg.fullName}</strong>? 
-                                  Tindakan ini akan mengembalikan 1 slot kuota untuk lokasi <strong>{reg.locationName}</strong>.
+                                  Tindakan ini akan mengembalikan 1 slot kuota untuk lokasi <strong>{reg.locationName}</strong> jika pendaftaran dilakukan setelah proses seed terakhir.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter className="gap-2">
