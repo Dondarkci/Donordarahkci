@@ -71,6 +71,13 @@ export default function RegistrationForm() {
     return Math.max((loc.maxQuota || 0) - (loc.currentRegistrations || 0), 0);
   };
 
+  // Filter out locations that are empty (no name or no quota)
+  const activeLocations = locations?.filter(loc => 
+    loc.locationName && 
+    loc.locationName.trim() !== "" && 
+    loc.maxQuota > 0
+  ) || [];
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
       toast({ 
@@ -226,12 +233,12 @@ export default function RegistrationForm() {
 
               <div className="space-y-6">
                 <h3 className="text-2xl font-headline text-[#2D241E] font-bold">Lokasi dan Tanggal</h3>
-                {isLocLoading ? <p>Memuat ketersediaan lokasi...</p> : (
+                {isLocLoading ? <p>Memuat ketersediaan lokasi...</p> : activeLocations.length === 0 ? <p className="text-[#80766E] italic">Belum ada lokasi yang tersedia saat ini.</p> : (
                   <FormField control={form.control} name="eventSlotId" render={({ field }) => (
                     <FormItem>
                       <FormControl>
                         <RadioGroup onValueChange={field.onChange} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {locations?.map((option) => {
+                          {activeLocations.map((option) => {
                             const remaining = getQuotaRemaining(option.id);
                             const isFull = remaining <= 0;
                             return (
