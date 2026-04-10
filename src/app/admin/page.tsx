@@ -7,23 +7,27 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2 } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useAuth, useMemoFirebase, useUser, useDoc } from "@/firebase";
-import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp } from "firebase/firestore";
+import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
+import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
 
 export default function AdminPage() {
   const db = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -33,6 +37,13 @@ export default function AdminPage() {
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newCapacity, setNewCapacity] = useState<number>(0);
+
+  // Editing Registration State
+  const [editingReg, setEditingReg] = useState<Registration | null>(null);
+  const [editRegName, setEditRegName] = useState("");
+  const [editRegEmail, setEditRegEmail] = useState("");
+  const [editRegUnit, setEditRegUnit] = useState("");
+  const [editRegIdNumber, setEditRegIdNumber] = useState(""); // NIK or NIPP
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -120,7 +131,7 @@ export default function AdminPage() {
     }
 
     const headers = ["Nama Lengkap", "NIK/NIPP", "Unit Kerja", "Email", "Gol. Darah", "Kategori", "Lokasi", "Tanggal", "Waktu Daftar"];
-    const rows = registrations.map(r => [
+    const rows = filteredData.map(r => [
       r.fullName,
       r.category === "Pegawai KCI" ? `'${r.nipp || ""}` : `'${r.nik || ""}`,
       r.unitKerja || "-",
@@ -158,13 +169,64 @@ export default function AdminPage() {
     }
   };
 
-  const filteredData = registrations?.filter(r => 
-    r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (r.nik && r.nik.includes(searchQuery)) ||
-    (r.nipp && r.nipp.includes(searchQuery)) ||
-    r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const handleEditReg = (reg: Registration) => {
+    setEditingReg(reg);
+    setEditRegName(reg.fullName);
+    setEditRegEmail(reg.email);
+    setEditRegUnit(reg.unitKerja || "");
+    setEditRegIdNumber(reg.category === "Pegawai KCI" ? (reg.nipp || "") : (reg.nik || ""));
+  };
+
+  const handleSaveReg = async () => {
+    if (!editingReg) return;
+    try {
+      // Find the document path. We know registrations are in users/{userId}/registrations/{id}
+      // The Registration type has the ID and the githubUserId (which is the userId)
+      const regRef = doc(db, "users", editingReg.githubUserId, "registrations", editingReg.id);
+      
+      const updateData: any = {
+        fullName: editRegName,
+        email: editRegEmail,
+        updatedAt: serverTimestamp()
+      };
+
+      if (editingReg.category === "Pegawai KCI") {
+        updateData.nipp = editRegIdNumber;
+        updateData.unitKerja = editRegUnit;
+      } else {
+        updateData.nik = editRegIdNumber;
+      }
+
+      await updateDoc(regRef, updateData);
+      setEditingReg(null);
+      toast({ title: "Data Pendaftar Berhasil Diperbarui" });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Gagal Memperbarui Data", variant: "destructive" });
+    }
+  };
+
+  const filteredData = registrations?.filter(r => {
+    const matchesSearch = r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.nik && r.nik.includes(searchQuery)) ||
+      (r.nipp && r.nipp.includes(searchQuery)) ||
+      r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.category?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    let matchesDate = true;
+    if (startDate && endDate && r.locationDate) {
+      try {
+        const eventDate = parseISO(r.locationDate);
+        const start = startOfDay(parseISO(startDate));
+        const end = endOfDay(parseISO(endDate));
+        matchesDate = isWithinInterval(eventDate, { start, end });
+      } catch (e) {
+        matchesDate = true;
+      }
+    }
+
+    return matchesSearch && matchesDate;
+  }) || [];
 
   if (isUserLoading || (user && isAdminCheckLoading)) {
     return (
@@ -225,29 +287,6 @@ export default function AdminPage() {
               </Button>
             </Link>
           </form>
-          
-          {user && !isAuthorized && (
-            <div className="space-y-4 animate-in fade-in zoom-in">
-              <div className="text-center text-xs text-red-600 font-bold bg-red-50 p-4 rounded-2xl border border-red-100 flex flex-col items-center gap-2">
-                <AlertCircle className="h-5 w-5" />
-                <p>Akun Anda ({user.email}) belum dikonfigurasi sebagai Admin di database.</p>
-                <p className="text-[10px] opacity-70">UID: {user.uid}</p>
-              </div>
-              
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 space-y-3 text-center">
-                <p className="text-xs font-bold text-amber-900">
-                  Jika Anda seharusnya memiliki akses, hubungi Administrator atau buka pengaturan jika Anda memiliki izin khusus.
-                </p>
-                {isSuperAdmin && (
-                  <Link href="/admin/developer" className="block">
-                    <Button variant="outline" className="w-full border-amber-200 text-amber-700 font-bold hover:bg-amber-100">
-                      Buka Pengaturan Developer
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
         </Card>
       </div>
     );
@@ -363,12 +402,39 @@ export default function AdminPage() {
       <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
         <div className="p-6 md:p-8 space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-[900px]">
+            <div className="relative flex-1 max-w-[700px]">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#80766E]/40" />
               <Input placeholder="Cari nama, ID, email, atau unit..." className="pl-14 h-14 bg-[#F8F7F4] border-none rounded-2xl text-base" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-            <div className="bg-white border border-[#E5E7EB] rounded-full px-6 py-2.5 shadow-sm">
-              <span className="font-bold text-base text-[#2D241E]">Total: {filteredData.length} Orang</span>
+            
+            <div className="flex items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("h-14 px-5 rounded-2xl border-none bg-[#F8F7F4] text-[#80766E] font-bold gap-2", (startDate || endDate) && "text-primary bg-primary/5")}>
+                    <CalendarIcon className="h-5 w-5" />
+                    {startDate && endDate ? `${format(parseISO(startDate), 'dd/MM')} - ${format(parseISO(endDate), 'dd/MM')}` : "Filter Tanggal"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-6 rounded-3xl border-none shadow-2xl space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-[#80766E]">Dari Tanggal</Label>
+                    <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-[#F8F7F4] border-none rounded-xl h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-[#80766E]">Sampai Tanggal</Label>
+                    <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-[#F8F7F4] border-none rounded-xl h-11" />
+                  </div>
+                  {(startDate || endDate) && (
+                    <Button variant="ghost" onClick={() => { setStartDate(""); setEndDate(""); }} className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 font-bold h-11 gap-2 rounded-xl">
+                      <FilterX className="h-4 w-4" /> Reset Filter
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
+
+              <div className="bg-white border border-[#E5E7EB] rounded-full px-6 py-2.5 shadow-sm h-14 flex items-center">
+                <span className="font-bold text-base text-[#2D241E]">Total: {filteredData.length} Orang</span>
+              </div>
             </div>
           </div>
 
@@ -383,14 +449,15 @@ export default function AdminPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead>Lokasi</TableHead>
-                  <TableHead className="text-right">Waktu Daftar</TableHead>
+                  <TableHead>Waktu Daftar</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isRegsLoading ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
                 ) : filteredData.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
                   filteredData.map((reg) => (
                     <TableRow key={reg.id}>
@@ -411,8 +478,18 @@ export default function AdminPage() {
                         </span>
                       </TableCell>
                       <TableCell className="font-bold">{reg.locationName}</TableCell>
-                      <TableCell className="text-right text-[#A09891] text-sm">
+                      <TableCell className="text-[#A09891] text-sm">
                         {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditReg(reg)}
+                          className="text-primary hover:text-primary hover:bg-primary/10 rounded-full"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -445,6 +522,38 @@ export default function AdminPage() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditingLoc(null)} className="h-12 rounded-xl">Batal</Button>
             <Button onClick={handleSaveLocation} className="h-12 rounded-xl bg-primary text-white">Simpan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingReg} onOpenChange={(open) => !open && setEditingReg(null)}>
+        <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-headline font-bold">Edit Data Pendaftar</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 space-y-5">
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">Nama Lengkap</Label>
+              <Input value={editRegName} onChange={(e) => setEditRegName(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">Email</Label>
+              <Input type="email" value={editRegEmail} onChange={(e) => setEditRegEmail(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">{editingReg?.category === "Pegawai KCI" ? "NIPP/NIK" : "NIK"}</Label>
+              <Input value={editRegIdNumber} onChange={(e) => setEditRegIdNumber(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+            </div>
+            {editingReg?.category === "Pegawai KCI" && (
+              <div className="space-y-2">
+                <Label className="text-sm font-bold">Unit Kerja</Label>
+                <Input value={editRegUnit} onChange={(e) => setEditRegUnit(e.target.value)} className="h-12 bg-[#F8F7F4] border-none rounded-xl" />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingReg(null)} className="h-12 rounded-xl">Batal</Button>
+            <Button onClick={handleSaveReg} className="h-12 rounded-xl bg-primary text-white">Simpan Perubahan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
