@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Registration, LocationOption } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,6 +21,7 @@ import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serve
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import RegistrationStatement from "@/components/RegistrationStatement";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -55,6 +56,7 @@ export default function AdminPage() {
 
   // Statement View State
   const [viewingStatement, setViewingStatement] = useState<{ reg: Registration; index: number } | null>(null);
+  const statementRef = useRef<HTMLDivElement>(null);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -300,6 +302,39 @@ export default function AdminPage() {
       console.error(e);
       toast({ title: "Gagal Memperbarui Data", variant: "destructive" });
     }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!viewingStatement || !statementRef.current) return;
+    
+    const { reg } = viewingStatement;
+    let formattedDate = reg.locationDate || "Kegiatan";
+    try {
+      if (reg.locationDate) {
+        const eventDate = parseISO(reg.locationDate);
+        formattedDate = format(eventDate, "dd MMMM yyyy", { locale: localeId });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    const filename = `${reg.fullName} (${formattedDate}).pdf`;
+    
+    // Dynamic import to avoid SSR issues
+    const html2pdf = (await import('html2pdf.js')).default;
+    
+    const element = statementRef.current;
+    const opt = {
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    toast({ title: "Sedang Menyiapkan PDF", description: "Mohon tunggu sebentar..." });
+    
+    html2pdf().set(opt).from(element).save();
   };
 
   const filteredData = (registrations || [])
@@ -737,18 +772,20 @@ export default function AdminPage() {
               variant="outline" 
               size="sm" 
               className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2 font-bold"
-              onClick={() => window.print()}
+              onClick={handleDownloadPdf}
             >
-              <Printer className="h-4 w-4" /> Cetak Formulir
+              <Download className="h-4 w-4" /> Download PDF
             </Button>
           </DialogHeader>
           <ScrollArea className="max-h-[calc(90vh-80px)]">
-            {viewingStatement && (
-              <RegistrationStatement 
-                registration={viewingStatement.reg} 
-                index={viewingStatement.index} 
-              />
-            )}
+            <div ref={statementRef}>
+              {viewingStatement && (
+                <RegistrationStatement 
+                  registration={viewingStatement.reg} 
+                  index={viewingStatement.index} 
+                />
+              )}
+            </div>
           </ScrollArea>
         </DialogContent>
       </Dialog>
