@@ -1,10 +1,10 @@
-
 "use client";
 
 import React from "react";
 import { ParticipantRegistration } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 interface RegistrationStatementProps {
   registration: ParticipantRegistration;
@@ -20,6 +20,8 @@ function toRoman(num: number): string {
 }
 
 export default function RegistrationStatement({ registration, index }: RegistrationStatementProps) {
+  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "https://picsum.photos/seed/kci-logo/200/100";
+
   // Parse event date for the reference number (Roman Month / Full Year)
   let mmRoman = "00";
   let yyyy = "0000";
@@ -35,7 +37,6 @@ export default function RegistrationStatement({ registration, index }: Registrat
   }
 
   // Format registration date for the signature section
-  // Firestore timestamps have seconds, we fallback to now if missing
   const regDate = registration.registrationDate?.seconds 
     ? new Date(registration.registrationDate.seconds * 1000) 
     : new Date();
@@ -46,13 +47,13 @@ export default function RegistrationStatement({ registration, index }: Registrat
     <div className="bg-white p-12 text-[#2D241E] font-serif leading-relaxed w-[210mm] min-h-[297mm] mx-auto shadow-sm print:shadow-none print:p-0">
       {/* Header with Logo */}
       <div className="flex justify-end mb-12">
-        <div className="relative w-40 h-16">
+        <div className="relative w-48 h-20">
           <Image 
-            src="https://picsum.photos/seed/kci-logo/200/100" 
+            src={kciLogo} 
             alt="KAI Commuter Logo" 
             fill 
-            className="object-contain"
-            data-ai-hint="train logo"
+            className="object-contain object-right"
+            data-ai-hint="kai commuter"
           />
         </div>
       </div>
@@ -101,7 +102,6 @@ export default function RegistrationStatement({ registration, index }: Registrat
       <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center">
         <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
         <div className="mb-4 flex items-center justify-center">
-          {/* Using standard img tag for better compatibility with html2pdf/canvas to prevent cropping */}
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
             alt="Digital Signature QR" 
@@ -109,7 +109,6 @@ export default function RegistrationStatement({ registration, index }: Registrat
           />
         </div>
         
-        {/* Full name moved below barcode and above the line */}
         <p className="font-bold capitalize text-lg mb-2">
           {registration.fullName}
         </p>

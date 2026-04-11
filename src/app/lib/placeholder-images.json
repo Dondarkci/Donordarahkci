@@ -1,4 +1,3 @@
-
 {
   "placeholderImages": [
     {
@@ -9,9 +8,9 @@
     },
     {
       "id": "logo-kci",
-      "description": "KCI Logo Placeholder",
-      "imageUrl": "https://picsum.photos/seed/kci-logo/200/200",
-      "imageHint": "train logo"
+      "description": "KAI Commuter Official Logo",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/KAI_Commuter_logo.svg/512px-KAI_Commuter_logo.svg.png",
+      "imageHint": "kai commuter"
     }
   ]
 }
