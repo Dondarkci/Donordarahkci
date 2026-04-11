@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin, ChevronLeft, ChevronRight, FileText, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,8 @@ import { collection, doc, updateDoc, getDocs, writeBatch, collectionGroup, serve
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { cn } from "@/lib/utils";
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from "date-fns";
+import RegistrationStatement from "@/components/RegistrationStatement";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ITEMS_PER_PAGE = 50;
 
@@ -48,8 +50,11 @@ export default function AdminPage() {
   const [editRegName, setEditRegName] = useState("");
   const [editRegEmail, setEditRegEmail] = useState("");
   const [editRegUnit, setEditRegUnit] = useState("");
-  const [editRegIdNumber, setEditRegIdNumber] = useState(""); // NIK or NIPP
+  const [editRegIdNumber, setEditRegIdNumber] = useState("");
   const [editRegSlotId, setEditRegSlotId] = useState("");
+
+  // Statement View State
+  const [viewingStatement, setViewingStatement] = useState<{ reg: Registration; index: number } | null>(null);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -156,7 +161,6 @@ export default function AdminPage() {
         const regDateSecs = reg.registrationDate?.seconds || 0;
         const currentCount = slot.currentRegistrations || 0;
 
-        // Only decrement if registration is "new" (after last seed/reset)
         if (regDateSecs > slotUpdateSecs && currentCount > 0) {
           const slotRef = doc(db, "eventSlots", reg.eventSlotId);
           batch.update(slotRef, { 
@@ -237,7 +241,6 @@ export default function AdminPage() {
     setEditRegName(reg.fullName);
     setEditRegEmail(reg.email);
     setEditRegUnit(reg.unitKerja || "");
-    // Fallback: use NIPP or NIK depending on what's available for the employee category
     const idNum = (reg.category === "Pegawai KCI" || reg.category === "Internal") ? (reg.nipp || reg.nik || "") : (reg.nik || reg.nipp || "");
     setEditRegIdNumber(idNum);
     setEditRegSlotId(reg.eventSlotId);
@@ -262,7 +265,6 @@ export default function AdminPage() {
         updateData.nik = editRegIdNumber;
       }
 
-      // Check if location changed
       if (editRegSlotId !== editingReg.eventSlotId) {
         const oldSlot = locations?.find(l => l.id === editingReg.eventSlotId);
         const newSlot = locations?.find(l => l.id === editRegSlotId);
@@ -275,7 +277,6 @@ export default function AdminPage() {
           const oldSlotRef = doc(db, "eventSlots", editingReg.eventSlotId);
           const newSlotRef = doc(db, "eventSlots", editRegSlotId);
 
-          // Only decrement old slot if the registration was done after the last reset/seed
           if (oldSlot) {
             const oldSlotUpdateSecs = oldSlot.updatedAt?.seconds || 0;
             const regDateSecs = editingReg.registrationDate?.seconds || 0;
@@ -286,7 +287,6 @@ export default function AdminPage() {
             }
           }
 
-          // Always increment new slot because this registration now takes a current slot
           batch.update(newSlotRef, { currentRegistrations: increment(1) });
         }
       }
@@ -572,90 +572,95 @@ export default function AdminPage() {
                 ) : paginatedData.length === 0 ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
-                  paginatedData.map((reg) => (
-                    <TableRow key={reg.id}>
-                      <TableCell className="font-bold text-center capitalize">{reg.fullName}</TableCell>
-                      <TableCell className="font-bold text-center">
-                        {/* Use NIPP as primary, but fallback to NIK for old data where category might mismatch or be mixed */}
-                        {(reg.nipp || reg.nik || "-")}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-[10px] md:text-xs border border-red-100 p-1 text-center leading-tight">
-                          {reg.bloodType === "Tidak pernah diperiksa" ? "N/A" : (reg.bloodType || "-")}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">{reg.unitKerja || "-"}</TableCell>
-                      <TableCell className="text-center">{reg.email}</TableCell>
-                      <TableCell className="text-center">
-                        <span className={cn("px-2 py-1 rounded-full text-xs font-bold", (reg.category === "Pegawai KCI" || reg.category === "Internal") ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
-                          {reg.category === "Internal" ? "Pegawai KCI" : reg.category}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="font-bold">{reg.locationName}</div>
-                        <div className="text-[10px] text-[#80766E]">{reg.locationDate}</div>
-                      </TableCell>
-                      <TableCell className="text-[#A09891] text-sm text-center">
-                        {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
+                  paginatedData.map((reg, idx) => {
+                    // Overall index in filtered data
+                    const globalIndex = filteredData.length - ((currentPage - 1) * ITEMS_PER_PAGE + idx);
+                    
+                    return (
+                      <TableRow key={reg.id}>
+                        <TableCell className="font-bold text-center capitalize">{reg.fullName}</TableCell>
+                        <TableCell className="font-bold text-center">
+                          {(reg.nipp || reg.nik || "-")}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 text-red-700 font-bold text-[10px] md:text-xs border border-red-100 p-1 text-center leading-tight">
+                            {reg.bloodType === "Tidak pernah diperiksa" ? "N/A" : (reg.bloodType || "-")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">{reg.unitKerja || "-"}</TableCell>
+                        <TableCell className="text-center">{reg.email}</TableCell>
+                        <TableCell className="text-center">
+                          <span className={cn("px-2 py-1 rounded-full text-xs font-bold", (reg.category === "Pegawai KCI" || reg.category === "Internal") ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600")}>
+                            {reg.category === "Internal" ? "Pegawai KCI" : reg.category}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="font-bold">{reg.locationName}</div>
+                          <div className="text-[10px] text-[#80766E]">{reg.locationDate}</div>
+                        </TableCell>
+                        <TableCell className="text-[#A09891] text-sm text-center">
+                          {reg.registrationDate ? new Date(reg.registrationDate.seconds * 1000).toLocaleString('id-ID') : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditReg(reg)}
+                              className="text-primary hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0"
+                              title="Edit Data"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full h-8 w-8 p-0"
+                                  title="Hapus Pendaftar"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="rounded-[32px] border-none shadow-2xl">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-2xl font-headline font-bold text-[#2D241E] flex items-center gap-2">
+                                    <AlertTriangle className="h-6 w-6 text-red-500" /> Hapus Pendaftar?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="text-[#80766E] text-base">
+                                    Apakah Anda yakin ingin menghapus data <strong>{reg.fullName}</strong>? 
+                                    Tindakan ini akan mengembalikan 1 slot kuota untuk lokasi <strong>{reg.locationName}</strong> jika pendaftaran dilakukan setelah proses seed terakhir.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="gap-2">
+                                  <AlertDialogCancel className="h-12 rounded-xl font-bold border-none bg-[#F8F7F4]">Batal</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteReg(reg)} 
+                                    className="h-12 rounded-xl bg-destructive text-white font-bold"
+                                  >
+                                    Ya, Hapus Data
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => handleEditReg(reg)}
-                            className="text-primary hover:text-primary hover:bg-primary/10 rounded-full h-8 w-8 p-0"
-                            title="Edit Data"
+                            onClick={() => setViewingStatement({ reg, index: globalIndex })}
+                            className="text-[#80766E] hover:text-primary hover:bg-primary/5 rounded-full h-8 w-8 p-0"
+                            title="Lihat Form"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <FileText className="h-4 w-4" />
                           </Button>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full h-8 w-8 p-0"
-                                title="Hapus Pendaftar"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="rounded-[32px] border-none shadow-2xl">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-2xl font-headline font-bold text-[#2D241E] flex items-center gap-2">
-                                  <AlertTriangle className="h-6 w-6 text-red-500" /> Hapus Pendaftar?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-[#80766E] text-base">
-                                  Apakah Anda yakin ingin menghapus data <strong>{reg.fullName}</strong>? 
-                                  Tindakan ini akan mengembalikan 1 slot kuota untuk lokasi <strong>{reg.locationName}</strong> jika pendaftaran dilakukan setelah proses seed terakhir.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className="gap-2">
-                                <AlertDialogCancel className="h-12 rounded-xl font-bold border-none bg-[#F8F7F4]">Batal</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteReg(reg)} 
-                                  className="h-12 rounded-xl bg-destructive text-white font-bold"
-                                >
-                                  Ya, Hapus Data
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-[#80766E] hover:text-primary hover:bg-primary/5 rounded-full h-8 w-8 p-0"
-                          title="Lihat Form"
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -680,11 +685,7 @@ export default function AdminPage() {
                 <div className="hidden sm:flex items-center gap-1 mx-2">
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
-                    if (
-                      pageNum === 1 || 
-                      pageNum === totalPages || 
-                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                    ) {
+                    if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
                       return (
                         <Button
                           key={pageNum}
@@ -701,10 +702,7 @@ export default function AdminPage() {
                           {pageNum}
                         </Button>
                       );
-                    } else if (
-                      (pageNum === 2 && currentPage > 3) || 
-                      (pageNum === totalPages - 1 && currentPage < totalPages - 2)
-                    ) {
+                    } else if ((pageNum === 2 && currentPage > 3) || (pageNum === totalPages - 1 && currentPage < totalPages - 2)) {
                       return <span key={pageNum} className="px-1 text-[#80766E]">...</span>;
                     }
                     return null;
@@ -730,6 +728,32 @@ export default function AdminPage() {
         </div>
       </Card>
 
+      {/* Viewing Statement Dialog */}
+      <Dialog open={!!viewingStatement} onOpenChange={(open) => !open && setViewingStatement(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 rounded-[32px] border-none shadow-2xl overflow-hidden">
+          <DialogHeader className="bg-primary p-6 text-white flex flex-row items-center justify-between">
+            <DialogTitle className="text-xl font-headline font-bold">Formulir Pernyataan Pendaftar</DialogTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2 font-bold"
+              onClick={() => window.print()}
+            >
+              <Printer className="h-4 w-4" /> Cetak Formulir
+            </Button>
+          </DialogHeader>
+          <ScrollArea className="max-h-[calc(90vh-80px)]">
+            {viewingStatement && (
+              <RegistrationStatement 
+                registration={viewingStatement.reg} 
+                index={viewingStatement.index} 
+              />
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Location Dialog */}
       <Dialog open={!!editingLoc} onOpenChange={(open) => !open && setEditingLoc(null)}>
         <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
           <DialogHeader>
@@ -771,6 +795,7 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Registration Dialog */}
       <Dialog open={!!editingReg} onOpenChange={(open) => !open && setEditingReg(null)}>
         <DialogContent className="sm:max-w-md rounded-[32px] border-none shadow-2xl">
           <DialogHeader>
