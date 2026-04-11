@@ -59,8 +59,8 @@ export default function RegistrationStatement({ registration, index }: Registrat
 
       {/* Title */}
       <div className="text-center mb-10">
-        <h1 className="text-xl font-bold underline uppercase tracking-wide">Formulir Pernyataan</h1>
-        <p className="text-base mt-1">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
+        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-1">Formulir Pernyataan</h1>
+        <p className="text-base">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
       </div>
 
       {/* Identification Section */}
@@ -84,17 +84,26 @@ export default function RegistrationStatement({ registration, index }: Registrat
       {/* Declaration Section */}
       <div className="space-y-6 mb-16 text-justify text-base">
         <p>Menyatakan bahwa :</p>
-        <ol className="list-decimal ml-10 space-y-4">
-          <li>
-            Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
-          </li>
-          <li>
-            Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik guna keperluan donor darah, sesuai ketentuan perundang-undangan.
-          </li>
-          <li>
-            Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
-          </li>
-        </ol>
+        <div className="ml-4 space-y-4">
+          <div className="flex items-start">
+            <span className="w-6 shrink-0">1.</span>
+            <p className="flex-1">
+              Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
+            </p>
+          </div>
+          <div className="flex items-start">
+            <span className="w-6 shrink-0">2.</span>
+            <p className="flex-1">
+              Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik guna keperluan donor darah, sesuai ketentuan perundang-undangan.
+            </p>
+          </div>
+          <div className="flex items-start">
+            <span className="w-6 shrink-0">3.</span>
+            <p className="flex-1">
+              Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Footer / Signature Section */}
