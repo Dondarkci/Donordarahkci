@@ -84,7 +84,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
       {/* Declaration Section */}
       <div className="space-y-3 mb-8 text-justify text-base">
         <p>Menyatakan bahwa :</p>
-        <div className="ml-4 space-y-3">
+        <div className="ml-4 space-y-2">
           <div className="flex items-start gap-3">
             <span className="w-4 shrink-0 font-medium">1.</span>
             <p className="flex-1 m-0">
@@ -108,8 +108,8 @@ export default function RegistrationStatement({ registration, index }: Registrat
 
       {/* Footer / Signature Section */}
       <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center mt-2">
-        <p className="text-base mb-1">Jakarta, {regDateFormatted}</p>
-        <div className="mb-1 flex items-center justify-center">
+        <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
+        <div className="mb-4 flex items-center justify-center">
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
             alt="Digital Signature QR" 
