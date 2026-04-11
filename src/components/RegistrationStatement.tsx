@@ -34,10 +34,10 @@ export default function RegistrationStatement({ registration, index }: Registrat
   const regDateFormatted = format(regDate, "dd/MM/yyyy");
 
   return (
-    <div className="bg-white p-8 md:p-12 text-[#2D241E] font-serif leading-relaxed max-w-[800px] mx-auto shadow-sm print:shadow-none print:p-0">
+    <div className="bg-white p-12 text-[#2D241E] font-serif leading-relaxed w-[210mm] min-h-[297mm] mx-auto shadow-sm print:shadow-none print:p-0">
       {/* Header with Logo */}
-      <div className="flex justify-end mb-8">
-        <div className="relative w-32 h-12">
+      <div className="flex justify-end mb-12">
+        <div className="relative w-40 h-16">
           <Image 
             src="https://picsum.photos/seed/kci-logo/200/100" 
             alt="KAI Commuter Logo" 
@@ -49,15 +49,15 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Title */}
-      <div className="text-center mb-8">
-        <h1 className="text-lg font-bold underline uppercase tracking-wide">Formulir Pernyataan</h1>
-        <p className="text-sm">No. {index}/dondarkci/{mm}/{yy}</p>
+      <div className="text-center mb-10">
+        <h1 className="text-xl font-bold underline uppercase tracking-wide">Formulir Pernyataan</h1>
+        <p className="text-base mt-1">No. {index}/dondarkci/{mm}/{yy}</p>
       </div>
 
       {/* Identification Section */}
-      <div className="space-y-2 mb-8">
-        <p>Saya yang bertanda tangan dibawah ini :</p>
-        <div className="grid grid-cols-[140px_10px_1fr] gap-2 ml-4">
+      <div className="space-y-3 mb-10">
+        <p className="text-base">Saya yang bertanda tangan dibawah ini :</p>
+        <div className="grid grid-cols-[160px_10px_1fr] gap-2 ml-4 text-base">
           <span className="font-medium">Nama</span>
           <span>:</span>
           <span className="capitalize">{registration.fullName}</span>
@@ -73,9 +73,9 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Declaration Section */}
-      <div className="space-y-4 mb-12 text-justify">
+      <div className="space-y-6 mb-16 text-justify text-base">
         <p>Menyatakan bahwa :</p>
-        <ol className="list-decimal ml-8 space-y-3">
+        <ol className="list-decimal ml-10 space-y-4">
           <li>
             Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
           </li>
@@ -89,20 +89,17 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Footer / Signature Section */}
-      <div className="flex flex-col items-center ml-auto w-[250px] mr-4 space-y-1">
-        <p className="text-sm mb-2">Jakarta, {regDateFormatted}</p>
-        <div className="py-2 flex items-center justify-center min-h-[140px]">
-          {/* Functional Digital Signature QR Code - Using fixed dimensions to prevent cropping in PDF */}
-          <Image 
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName)}`} 
+      <div className="flex flex-col items-center ml-auto w-[280px] mr-4">
+        <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
+        <div className="mb-6 flex items-center justify-center">
+          {/* Using standard img tag for better compatibility with html2pdf/canvas to prevent cropping */}
+          <img 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
             alt="Digital Signature QR" 
-            width={120}
-            height={120}
-            className="block"
-            priority
+            style={{ width: '120px', height: '120px', display: 'block' }}
           />
         </div>
-        <div className="w-full border-t border-gray-400 pt-2 text-center">
+        <div className="w-full border-t border-gray-400 pt-3 text-center">
           <p className="font-bold capitalize text-lg">
             {registration.fullName}
           </p>
@@ -110,7 +107,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
       
       {/* Print Button Instruction (Hidden in Print) */}
-      <div className="mt-16 text-center print:hidden">
+      <div className="mt-24 text-center print:hidden">
         <p className="text-xs text-gray-400 italic">Dokumen ini sah secara digital melalui sistem Donor Darah PT KCI</p>
       </div>
     </div>
