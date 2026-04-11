@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "logo-kci",
+      "description": "KAI Commuter Official Logo",
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/KAI_Commuter_logo.svg/512px-KAI_Commuter_logo.svg.png",
+      "imageHint": "kai commuter"
+    }
+  ]
 }

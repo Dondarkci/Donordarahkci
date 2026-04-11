@@ -1,9 +1,9 @@
+
 "use client";
 
 import React from "react";
 import { ParticipantRegistration } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 interface RegistrationStatementProps {
@@ -20,7 +20,7 @@ function toRoman(num: number): string {
 }
 
 export default function RegistrationStatement({ registration, index }: RegistrationStatementProps) {
-  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "https://picsum.photos/seed/kci-logo/200/100";
+  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/KAI_Commuter_logo.svg/512px-KAI_Commuter_logo.svg.png";
 
   // Parse event date for the reference number (Roman Month / Full Year)
   let mmRoman = "00";
@@ -47,13 +47,11 @@ export default function RegistrationStatement({ registration, index }: Registrat
     <div className="bg-white p-12 text-[#2D241E] font-serif leading-relaxed w-[210mm] min-h-[297mm] mx-auto shadow-sm print:shadow-none print:p-0">
       {/* Header with Logo */}
       <div className="flex justify-end mb-12">
-        <div className="relative w-48 h-20">
-          <Image 
+        <div className="w-56 h-24 relative">
+          <img 
             src={kciLogo} 
             alt="KAI Commuter Logo" 
-            fill 
-            className="object-contain object-right"
-            data-ai-hint="kai commuter"
+            className="w-full h-full object-contain object-right"
           />
         </div>
       </div>
@@ -109,12 +107,13 @@ export default function RegistrationStatement({ registration, index }: Registrat
           />
         </div>
         
-        <p className="font-bold capitalize text-lg mb-2">
-          {registration.fullName}
-        </p>
-        
-        {/* Signature Line */}
-        <div className="w-full border-t border-gray-400"></div>
+        <div className="relative w-full">
+          <p className="font-bold capitalize text-lg mb-1">
+            {registration.fullName}
+          </p>
+          {/* Signature Line */}
+          <div className="w-full border-t border-gray-400"></div>
+        </div>
       </div>
       
       {/* Print Button Instruction (Hidden in Print) */}
