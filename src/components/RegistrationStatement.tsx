@@ -4,7 +4,6 @@
 import React from "react";
 import { ParticipantRegistration } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import { id } from "date-fns/locale";
 import Image from "next/image";
 
 interface RegistrationStatementProps {
@@ -26,8 +25,13 @@ export default function RegistrationStatement({ registration, index }: Registrat
     console.error("Error parsing event date for statement", e);
   }
 
-  // Format today's date for the signature section
-  const todayFormatted = format(new Date(), "dd/MM/yyyy");
+  // Format registration date for the signature section
+  // Firestore timestamps have seconds, we fallback to now if missing
+  const regDate = registration.registrationDate?.seconds 
+    ? new Date(registration.registrationDate.seconds * 1000) 
+    : new Date();
+  
+  const regDateFormatted = format(regDate, "dd/MM/yyyy");
 
   return (
     <div className="bg-white p-8 md:p-12 text-[#2D241E] font-serif leading-relaxed max-w-[800px] mx-auto shadow-sm print:shadow-none print:p-0">
@@ -86,21 +90,24 @@ export default function RegistrationStatement({ registration, index }: Registrat
 
       {/* Footer / Signature Section */}
       <div className="flex flex-col items-end mr-8 space-y-2">
-        <p>Jakarta, {todayFormatted}</p>
+        <p>Jakarta, {regDateFormatted}</p>
         <div className="py-4">
-          {/* Simulated Digital Barcode */}
-          <div className="w-24 h-24 border-2 border-gray-200 flex items-center justify-center bg-gray-50 rounded-lg">
-            <div className="flex flex-col items-center gap-1 opacity-20">
-              <div className="w-16 h-1 bg-black" />
-              <div className="w-16 h-1 bg-black" />
-              <div className="w-16 h-2 bg-black" />
-              <div className="w-16 h-1 bg-black" />
-              <div className="w-16 h-3 bg-black" />
-              <span className="text-[6px] font-sans">TTD DIGITAL</span>
+          {/* Functional Digital Signature QR Code */}
+          <div className="relative w-28 h-28 border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col items-center justify-center bg-[#F8F9FA]">
+            <div className="relative w-20 h-20">
+              <Image 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName)}`} 
+                alt="Digital Signature QR" 
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-[2px] text-[7px] font-sans font-bold text-center py-1 border-t border-gray-100 text-[#80766E] tracking-widest">
+              TTD DIGITAL
             </div>
           </div>
         </div>
-        <p className="font-bold border-t border-gray-300 pt-1 min-w-[150px] text-center capitalize">
+        <p className="font-bold border-t border-gray-300 pt-1 min-w-[200px] text-center capitalize text-lg">
           {registration.fullName}
         </p>
       </div>
