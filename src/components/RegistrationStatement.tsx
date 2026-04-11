@@ -11,15 +11,24 @@ interface RegistrationStatementProps {
   index: number;
 }
 
+function toRoman(num: number): string {
+  const roman: { [key: number]: string } = {
+    1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI",
+    7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "XI", 12: "XII"
+  };
+  return roman[num] || "00";
+}
+
 export default function RegistrationStatement({ registration, index }: RegistrationStatementProps) {
-  // Parse event date for the reference number (mm/yy)
-  let mm = "00";
-  let yy = "00";
+  // Parse event date for the reference number (Roman Month / Full Year)
+  let mmRoman = "00";
+  let yyyy = "0000";
   try {
     if (registration.locationDate) {
       const eventDate = parseISO(registration.locationDate);
-      mm = format(eventDate, "MM");
-      yy = format(eventDate, "yy");
+      const monthNum = parseInt(format(eventDate, "M"));
+      mmRoman = toRoman(monthNum);
+      yyyy = format(eventDate, "yyyy");
     }
   } catch (e) {
     console.error("Error parsing event date for statement", e);
@@ -51,7 +60,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
       {/* Title */}
       <div className="text-center mb-10">
         <h1 className="text-xl font-bold underline uppercase tracking-wide">Formulir Pernyataan</h1>
-        <p className="text-base mt-1">No. {index}/dondarkci/{mm}/{yy}</p>
+        <p className="text-base mt-1">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
       </div>
 
       {/* Identification Section */}
