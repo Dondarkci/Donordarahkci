@@ -98,9 +98,9 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Footer / Signature Section */}
-      <div className="flex flex-col items-center ml-auto w-[280px] mr-4">
+      <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center">
         <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
-        <div className="mb-6 flex items-center justify-center">
+        <div className="mb-4 flex items-center justify-center">
           {/* Using standard img tag for better compatibility with html2pdf/canvas to prevent cropping */}
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
@@ -108,11 +108,14 @@ export default function RegistrationStatement({ registration, index }: Registrat
             style={{ width: '120px', height: '120px', display: 'block' }}
           />
         </div>
-        <div className="w-full border-t border-gray-400 pt-3 text-center">
-          <p className="font-bold capitalize text-lg">
-            {registration.fullName}
-          </p>
-        </div>
+        
+        {/* Full name moved below barcode and above the line */}
+        <p className="font-bold capitalize text-lg mb-2">
+          {registration.fullName}
+        </p>
+        
+        {/* Signature Line */}
+        <div className="w-full border-t border-gray-400"></div>
       </div>
       
       {/* Print Button Instruction (Hidden in Print) */}
