@@ -44,10 +44,10 @@ export default function RegistrationStatement({ registration, index }: Registrat
   const regDateFormatted = format(regDate, "dd/MM/yyyy");
 
   return (
-    <div className="bg-white p-12 text-[#2D241E] font-serif leading-relaxed w-[210mm] min-h-[297mm] mx-auto shadow-sm print:shadow-none print:p-0">
+    <div className="bg-white p-10 text-[#2D241E] font-serif leading-relaxed w-[210mm] mx-auto shadow-sm print:shadow-none print:p-0">
       {/* Header with Logo */}
-      <div className="flex justify-end mb-12">
-        <div className="w-56 h-24 relative">
+      <div className="flex justify-end mb-6">
+        <div className="w-48 h-20 relative">
           <img 
             src={kciLogo} 
             alt="KAI Commuter Logo" 
@@ -58,13 +58,13 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Title */}
-      <div className="text-center mb-10">
+      <div className="text-center mb-6">
         <h1 className="text-xl font-bold underline uppercase tracking-wide mb-1">Formulir Pernyataan</h1>
         <p className="text-base">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
       </div>
 
       {/* Identification Section */}
-      <div className="space-y-3 mb-10">
+      <div className="space-y-2 mb-6">
         <p className="text-base">Saya yang bertanda tangan dibawah ini :</p>
         <div className="grid grid-cols-[160px_10px_1fr] gap-2 ml-4 text-base">
           <span className="font-medium">Nama</span>
@@ -82,23 +82,23 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Declaration Section */}
-      <div className="space-y-6 mb-16 text-justify text-base">
+      <div className="space-y-4 mb-8 text-justify text-base">
         <p>Menyatakan bahwa :</p>
-        <div className="ml-4 space-y-4">
+        <div className="ml-4 space-y-3">
           <div className="flex items-start">
-            <span className="w-6 shrink-0">1.</span>
+            <span className="w-6 shrink-0 font-medium">1.</span>
             <p className="flex-1">
               Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
             </p>
           </div>
           <div className="flex items-start">
-            <span className="w-6 shrink-0">2.</span>
+            <span className="w-6 shrink-0 font-medium">2.</span>
             <p className="flex-1">
               Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik guna keperluan donor darah, sesuai ketentuan perundang-undangan.
             </p>
           </div>
           <div className="flex items-start">
-            <span className="w-6 shrink-0">3.</span>
+            <span className="w-6 shrink-0 font-medium">3.</span>
             <p className="flex-1">
               Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
             </p>
@@ -108,8 +108,8 @@ export default function RegistrationStatement({ registration, index }: Registrat
 
       {/* Footer / Signature Section */}
       <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center">
-        <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
-        <div className="mb-4 flex items-center justify-center">
+        <p className="text-base mb-2">Jakarta, {regDateFormatted}</p>
+        <div className="mb-2 flex items-center justify-center">
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
             alt="Digital Signature QR" 
@@ -128,7 +128,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
       
       {/* Print Button Instruction (Hidden in Print) */}
-      <div className="mt-24 text-center print:hidden">
+      <div className="mt-8 text-center print:hidden">
         <p className="text-xs text-gray-400 italic">Dokumen ini sah secara digital melalui sistem Donor Darah PT KCI</p>
       </div>
     </div>
