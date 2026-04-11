@@ -20,7 +20,7 @@ function toRoman(num: number): string {
 }
 
 export default function RegistrationStatement({ registration, index }: RegistrationStatementProps) {
-  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/KAI_Commuter_logo.svg/512px-KAI_Commuter_logo.svg.png";
+  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/KAI_Commuter_logo.svg/1024px-KAI_Commuter_logo.svg.png";
 
   // Parse event date for the reference number (Roman Month / Full Year)
   let mmRoman = "00";
