@@ -52,6 +52,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
             src={kciLogo} 
             alt="KAI Commuter Logo" 
             className="w-full h-full object-contain object-right"
+            crossOrigin="anonymous"
           />
         </div>
       </div>
@@ -104,6 +105,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
             alt="Digital Signature QR" 
             style={{ width: '120px', height: '120px', display: 'block' }}
+            crossOrigin="anonymous"
           />
         </div>
         
