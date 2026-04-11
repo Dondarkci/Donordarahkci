@@ -57,7 +57,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
       {/* Identification Section */}
       <div className="space-y-2 mb-8">
         <p>Saya yang bertanda tangan dibawah ini :</p>
-        <div className="grid grid-cols-[120px_10px_1fr] gap-2 ml-4">
+        <div className="grid grid-cols-[140px_10px_1fr] gap-2 ml-4">
           <span className="font-medium">Nama</span>
           <span>:</span>
           <span className="capitalize">{registration.fullName}</span>
@@ -89,27 +89,29 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Footer / Signature Section */}
-      <div className="flex flex-col items-end mr-8 space-y-2">
-        <p>Jakarta, {regDateFormatted}</p>
-        <div className="py-2">
-          {/* Functional Digital Signature QR Code - Simplified to avoid cropping */}
-          <div className="relative w-24 h-24">
-            <Image 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName)}`} 
-              alt="Digital Signature QR" 
-              fill
-              className="object-contain"
-            />
-          </div>
+      <div className="flex flex-col items-center ml-auto w-[250px] mr-4 space-y-1">
+        <p className="text-sm mb-2">Jakarta, {regDateFormatted}</p>
+        <div className="py-2 flex items-center justify-center min-h-[140px]">
+          {/* Functional Digital Signature QR Code - Using fixed dimensions to prevent cropping in PDF */}
+          <Image 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName)}`} 
+            alt="Digital Signature QR" 
+            width={120}
+            height={120}
+            className="block"
+            priority
+          />
         </div>
-        <p className="font-bold border-t border-gray-300 pt-1 min-w-[200px] text-center capitalize text-lg">
-          {registration.fullName}
-        </p>
+        <div className="w-full border-t border-gray-400 pt-2 text-center">
+          <p className="font-bold capitalize text-lg">
+            {registration.fullName}
+          </p>
+        </div>
       </div>
       
       {/* Print Button Instruction (Hidden in Print) */}
-      <div className="mt-12 text-center print:hidden">
-        <p className="text-xs text-gray-400 italic">Gunakan fitur cetak browser (Ctrl+P) untuk menyimpan sebagai PDF</p>
+      <div className="mt-16 text-center print:hidden">
+        <p className="text-xs text-gray-400 italic">Dokumen ini sah secara digital melalui sistem Donor Darah PT KCI</p>
       </div>
     </div>
   );
