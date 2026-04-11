@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Droplet, Download, Trash2, SlidersHorizontal, Search, ArrowLeft, PlusCircle, LogOut, Lock, Settings, AlertCircle, Loader2, Calendar as CalendarIcon, Pencil, FilterX, AlertTriangle, RotateCcw, MapPin, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
@@ -563,13 +563,14 @@ export default function AdminPage() {
                   <TableHead className="text-center">Lokasi</TableHead>
                   <TableHead className="text-center">Waktu Daftar</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="text-right">Form</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isRegsLoading ? (
-                  <TableRow><TableCell colSpan={9} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center py-20 italic">Memuat data pendaftar...</TableCell></TableRow>
                 ) : paginatedData.length === 0 ? (
-                  <TableRow><TableCell colSpan={9} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
                   paginatedData.map((reg) => (
                     <TableRow key={reg.id}>
@@ -642,6 +643,16 @@ export default function AdminPage() {
                             </AlertDialogContent>
                           </AlertDialog>
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[#80766E] hover:text-primary hover:bg-primary/5 rounded-full h-8 w-8 p-0"
+                          title="Lihat Form"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
