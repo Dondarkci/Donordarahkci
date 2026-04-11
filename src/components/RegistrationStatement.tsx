@@ -91,20 +91,15 @@ export default function RegistrationStatement({ registration, index }: Registrat
       {/* Footer / Signature Section */}
       <div className="flex flex-col items-end mr-8 space-y-2">
         <p>Jakarta, {regDateFormatted}</p>
-        <div className="py-4">
-          {/* Functional Digital Signature QR Code */}
-          <div className="relative w-28 h-28 border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col items-center justify-center bg-[#F8F9FA]">
-            <div className="relative w-20 h-20">
-              <Image 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName)}`} 
-                alt="Digital Signature QR" 
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-[2px] text-[7px] font-sans font-bold text-center py-1 border-t border-gray-100 text-[#80766E] tracking-widest">
-              TTD DIGITAL
-            </div>
+        <div className="py-2">
+          {/* Functional Digital Signature QR Code - Simplified to avoid cropping */}
+          <div className="relative w-24 h-24">
+            <Image 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName)}`} 
+              alt="Digital Signature QR" 
+              fill
+              className="object-contain"
+            />
           </div>
         </div>
         <p className="font-bold border-t border-gray-300 pt-1 min-w-[200px] text-center capitalize text-lg">
