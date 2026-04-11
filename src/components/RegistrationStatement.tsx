@@ -119,7 +119,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
         </div>
         
         <div className="relative w-full">
-          <p className="font-bold capitalize text-lg mb-1">
+          <p className="font-bold capitalize text-lg mb-3">
             {registration.fullName}
           </p>
           {/* Signature Line */}
