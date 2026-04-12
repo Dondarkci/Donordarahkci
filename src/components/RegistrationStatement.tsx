@@ -20,7 +20,7 @@ function toRoman(num: number): string {
 }
 
 export default function RegistrationStatement({ registration, index }: RegistrationStatementProps) {
-  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/KAI_Commuter_logo.svg/1024px-KAI_Commuter_logo.svg.png";
+  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "/logokci.png";
 
   // Parse event date for the reference number (Roman Month / Full Year)
   let mmRoman = "00";
@@ -44,7 +44,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
   const regDateFormatted = format(regDate, "dd/MM/yyyy");
 
   return (
-    <div className="bg-white p-10 text-[#2D241E] font-serif leading-relaxed w-[210mm] min-h-[296mm] mx-auto shadow-sm print:shadow-none print:p-0 flex flex-col box-border">
+    <div className="bg-white p-10 text-[#2D241E] font-serif leading-relaxed w-[210mm] h-[297mm] mx-auto flex flex-col box-border overflow-hidden">
       {/* Header with Logo */}
       <div className="flex justify-end mb-4">
         <div className="w-48 h-16 relative">
@@ -59,7 +59,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
 
       {/* Title Area */}
       <div className="text-center mb-6">
-        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-1">Formulir Pernyataan</h1>
+        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-2">Formulir Pernyataan</h1>
         <p className="text-base">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
       </div>
 
@@ -82,23 +82,23 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Declaration Section */}
-      <div className="space-y-3 mb-8 text-justify text-base">
+      <div className="space-y-3 mb-6 text-justify text-base">
         <p>Menyatakan bahwa :</p>
-        <div className="ml-4 space-y-2">
+        <div className="ml-4 space-y-3">
           <div className="flex items-start gap-3">
-            <span className="w-4 shrink-0 font-medium">1.</span>
+            <span className="w-6 shrink-0 font-medium">1.</span>
             <p className="flex-1 m-0">
               Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="w-4 shrink-0 font-medium">2.</span>
+            <span className="w-6 shrink-0 font-medium">2.</span>
             <p className="flex-1 m-0">
               Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik guna keperluan donor darah, sesuai ketentuan perundang-undangan.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="w-4 shrink-0 font-medium">3.</span>
+            <span className="w-6 shrink-0 font-medium">3.</span>
             <p className="flex-1 m-0">
               Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
             </p>
@@ -107,7 +107,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Footer / Signature Section */}
-      <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center mt-2">
+      <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center mt-4">
         <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
         <div className="mb-4 flex items-center justify-center">
           <img 
@@ -128,8 +128,8 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
       
       {/* Absolute Bottom Text */}
-      <div className="mt-auto pb-8 text-center">
-        <p className="text-sm text-[#A0A8B0] italic">
+      <div className="mt-auto pb-6 text-center">
+        <p className="text-sm text-[#80766E]/60 italic">
           Dokumen ini sah secara digital melalui sistem Donor Darah PT KCI
         </p>
       </div>
