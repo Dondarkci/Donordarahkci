@@ -13,7 +13,12 @@ export async function POST(request: Request) {
       subject: 'Konfirmasi Pendaftaran Donor Darah PT KCI',
       html: `
         <p>Halo ${nama},</p>
-        <p>Terimakasih, anda telah terdaftar sebagai peserta Donor Darah PT Kereta Commuter Indonesa di ${lokasi} pada tanggal ${tanggal}. Setetes darah yang anda berikan sangat berarti bagi sesama.</p>
+        <p>Terimakasih, anda telah terdaftar sebagai peserta Donor Darah PT Kereta Commuter Indonesia di ${lokasi} pada tanggal ${tanggal}. Setetes darah yang anda berikan sangat berarti bagi sesama.</p>
+        <p>Sampai jumpa di lokasi ya Insan KAI Commuter<p>
+
+
+        <p>Salam hangat,<p>
+        <p>PT Kereta Commuter Indonesia<p>
       `,
     });
 
