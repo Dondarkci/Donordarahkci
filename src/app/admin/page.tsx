@@ -421,13 +421,13 @@ export default function AdminPage() {
                 required
               />
             </div>
-            <Button 
+            <button 
               type="submit" 
               disabled={isLoggingIn}
               className="w-full h-14 bg-primary text-white rounded-2xl text-lg font-bold shadow-lg shadow-primary/20"
             >
               {isLoggingIn ? "Memproses..." : "Masuk Sekarang"}
-            </Button>
+            </button>
             <Link href="/" className="block">
               <Button variant="ghost" className="w-full h-12 rounded-2xl text-[#80766E]">
                 <ArrowLeft className="h-4 w-4 mr-2" /> Kembali ke Beranda
@@ -766,7 +766,7 @@ export default function AdminPage() {
       {/* Viewing Statement Dialog */}
       <Dialog open={!!viewingStatement} onOpenChange={(open) => !open && setViewingStatement(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0 rounded-[32px] border-none shadow-2xl overflow-hidden">
-          <DialogHeader className="bg-primary p-6 text-white flex flex-row items-center justify-between">
+          <DialogHeader className="bg-primary p-6 pr-12 text-white flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-headline font-bold">Formulir Pernyataan Pendaftar</DialogTitle>
             <Button 
               variant="outline" 
