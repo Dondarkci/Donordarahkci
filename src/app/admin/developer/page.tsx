@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2, Loader2, Key, Send, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
@@ -35,20 +36,36 @@ export default function DeveloperSettingsPage() {
   const isAuthorized = isSuperAdmin || hasAdminRole;
 
   // Final check to see if we've determined the user's authority
-  // We must wait if auth is loading OR if firestore check is still in progress
   const isDeterminingAccess = isUserLoading || (!!user && isAdminCheckLoading);
 
-  // Effect to handle redirection if unauthorized
+  // API Settings State
+  const apiSettingsRef = useMemoFirebase(() => {
+    if (!isAuthorized || isDeterminingAccess) return null;
+    return doc(db, "settings", "api");
+  }, [db, isAuthorized, isDeterminingAccess]);
+
+  const { data: apiData, isLoading: isApiLoading } = useDoc(apiSettingsRef);
+  const [resendKey, setResendKey] = useState("");
+  const [fonnteToken, setFonnteToken] = useState("");
+  const [isSavingApi, setIsSavingApi] = useState(false);
+
+  useEffect(() => {
+    if (apiData) {
+      setResendKey(apiData.resendApiKey || "");
+      setFonnteToken(apiData.fonnteToken || "");
+    }
+  }, [apiData]);
+
+  // Redirection if unauthorized
   useEffect(() => {
     if (!isDeterminingAccess) {
       if (!user || !isAuthorized) {
-        console.log("Unauthorized access to developer page, redirecting...");
         router.replace("/admin");
       }
     }
   }, [user, isDeterminingAccess, isAuthorized, router]);
 
-  // List all admins for management
+  // List all admins
   const adminsQuery = useMemoFirebase(() => collection(db, "roles_admin"), [db]);
   const { data: adminList, isLoading: isListLoading } = useCollection(adminsQuery);
 
@@ -72,14 +89,27 @@ export default function DeveloperSettingsPage() {
   }
   
   if (!user || !isAuthorized) {
-    return (
-      <div className="min-h-screen bg-[#F8F5F0] flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <ShieldCheck className="h-16 w-16 text-red-500 opacity-20" />
-        <h2 className="text-2xl font-headline font-bold">Akses Ditolak</h2>
-        <p className="text-[#80766E] max-w-md">Anda tidak memiliki izin untuk mengakses halaman ini. Mengalihkan kembali...</p>
-      </div>
-    );
+    return null;
   }
+
+  const handleSaveApi = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!apiSettingsRef) return;
+    setIsSavingApi(true);
+    try {
+      await setDoc(apiSettingsRef, {
+        resendApiKey: resendKey.trim(),
+        fonnteToken: fonnteToken.trim(),
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.email
+      }, { merge: true });
+      toast({ title: "Berhasil", description: "Konfigurasi API telah disimpan." });
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSavingApi(false);
+    }
+  };
 
   const handlePromoteSelf = async () => {
     if (!user) return;
@@ -106,7 +136,6 @@ export default function DeveloperSettingsPage() {
       toast({ title: "Gagal", description: "Email dan UID wajib diisi.", variant: "destructive" });
       return;
     }
-
     setIsSyncing(true);
     try {
       const adminRef = doc(db, "roles_admin", manualUid.trim());
@@ -117,9 +146,9 @@ export default function DeveloperSettingsPage() {
         syncedBy: user.email,
         type: "Manual-Sync"
       });
-      toast({ title: "Sinkronisasi Berhasil", description: `Hak admin diberikan ke UID: ${manualUid}` });
       setManualUid("");
       setManualEmail("");
+      toast({ title: "Sinkronisasi Berhasil", description: `Hak admin diberikan ke UID: ${manualUid}` });
     } catch (error: any) {
       toast({ title: "Gagal Sinkronisasi", description: error.message, variant: "destructive" });
     } finally {
@@ -133,16 +162,13 @@ export default function DeveloperSettingsPage() {
       toast({ title: "Gagal", description: "Email dan Password wajib diisi.", variant: "destructive" });
       return;
     }
-
     setIsRegistering(true);
     const tempAppId = `TempApp-${Date.now()}`;
     const tempApp = initializeApp(firebaseConfig, tempAppId);
     const tempAuth = getAuth(tempApp);
-
     try {
       const userCredential = await createUserWithEmailAndPassword(tempAuth, newAdminEmail, newAdminPassword);
       const newUserUid = userCredential.user.uid;
-
       const adminRef = doc(db, "roles_admin", newUserUid);
       await setDoc(adminRef, {
         email: newAdminEmail,
@@ -151,14 +177,13 @@ export default function DeveloperSettingsPage() {
         registeredBy: user.email,
         type: "New-Registration"
       });
-
-      toast({ title: "Pendaftaran Berhasil", description: `Admin baru ${newAdminEmail} telah didaftarkan.` });
       setNewAdminEmail("");
       setNewAdminPassword("");
+      toast({ title: "Pendaftaran Berhasil", description: `Admin baru ${newAdminEmail} telah didaftarkan.` });
     } catch (error: any) {
       let msg = error.message;
       if (error.code === 'auth/email-already-in-use') {
-        msg = "Email sudah terdaftar di sistem autentikasi. Gunakan 'Sinkronisasi Manual' jika ingin memberi akses admin.";
+        msg = "Email sudah terdaftar. Gunakan 'Sinkronisasi Manual' jika ingin memberi akses admin.";
       }
       toast({ title: "Gagal Mendaftar", description: msg, variant: "destructive" });
     } finally {
@@ -176,7 +201,6 @@ export default function DeveloperSettingsPage() {
       toast({ title: "Gagal", description: "Akun Super Admin tidak bisa dihapus.", variant: "destructive" });
       return;
     }
-
     try {
       await deleteDoc(doc(db, "roles_admin", uid));
       toast({ title: "Berhasil", description: `Izin admin untuk ${email} telah dicabut.` });
@@ -202,7 +226,7 @@ export default function DeveloperSettingsPage() {
 
         <div className="space-y-2">
           <h1 className="text-4xl font-headline font-bold text-[#2D241E]">Manajemen Hak Akses</h1>
-          <p className="text-[#80766E]">Kelola akun administrator dan sinkronisasi izin basis data.</p>
+          <p className="text-[#80766E]">Kelola akun administrator dan konfigurasi API eksternal.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -226,66 +250,117 @@ export default function DeveloperSettingsPage() {
                 <TableBody>
                   {isListLoading ? (
                     <TableRow><TableCell colSpan={4} className="text-center py-8">Memuat daftar...</TableCell></TableRow>
-                  ) : adminList?.map((admin) => (
-                    <TableRow key={admin.id}>
-                      <TableCell className="font-bold">{admin.email}</TableCell>
-                      <TableCell className="text-xs font-mono opacity-60">{admin.uid || admin.id}</TableCell>
-                      <TableCell><span className="text-[10px] bg-muted px-2 py-0.5 rounded-full uppercase font-bold">{admin.type || "Admin"}</span></TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteAdmin(admin.id, admin.email)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          title="Cabut Akses Admin"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  ) : adminList?.map((admin) => {
+                    const isSuperAccount = admin.email?.toLowerCase() === "ronymunich@gmail.com";
+                    return (
+                      <TableRow key={admin.id}>
+                        <TableCell className="font-bold">{admin.email}</TableCell>
+                        <TableCell className="text-xs font-mono opacity-60">{admin.uid || admin.id}</TableCell>
+                        <TableCell><span className="text-[10px] bg-muted px-2 py-0.5 rounded-full uppercase font-bold">{admin.type || "Admin"}</span></TableCell>
+                        <TableCell className="text-right">
+                          {isSuperAccount ? (
+                            <div className="flex justify-end pr-2">
+                              <ShieldCheck className="h-4 w-4 text-emerald-500" title="Super Admin Dilindungi" />
+                            </div>
+                          ) : (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              title="Cabut Akses Admin"
+                              disabled={admin.id === user.uid}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
 
-          {/* Card: Promote Self */}
-          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
+          {/* API Configuration Card */}
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
             <CardHeader className="bg-amber-50 border-b border-amber-100">
               <CardTitle className="text-xl flex items-center gap-3 text-amber-700">
+                <Key className="h-5 w-5" /> Konfigurasi Layanan API
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form onSubmit={handleSaveApi} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold flex items-center gap-2">
+                      <Send className="h-3 w-3" /> Resend API Key (Email)
+                    </Label>
+                    <Input 
+                      type="password" 
+                      placeholder="re_..."
+                      value={resendKey}
+                      onChange={(e) => setResendKey(e.target.value)}
+                      className="h-11 bg-[#F8F7F4] border-none rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold flex items-center gap-2">
+                      <Smartphone className="h-3 w-3" /> Fonnte Token (WhatsApp)
+                    </Label>
+                    <Input 
+                      type="password" 
+                      placeholder="token..."
+                      value={fonnteToken}
+                      onChange={(e) => setFonnteToken(e.target.value)}
+                      className="h-11 bg-[#F8F7F4] border-none rounded-xl"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button 
+                    type="submit" 
+                    disabled={isSavingApi || isApiLoading}
+                    className="bg-amber-600 hover:bg-amber-700 text-white px-8 rounded-xl font-bold h-11"
+                  >
+                    {isSavingApi ? "Menyimpan..." : "Simpan Konfigurasi API"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Promote Self Card */}
+          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
+            <CardHeader className="bg-emerald-50 border-b border-emerald-100">
+              <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
                 <UserCheck className="h-5 w-5" /> Status Izin Anda
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
               <div className="space-y-2">
-                <p className="text-sm text-amber-800">
-                  Email Aktif: <strong>{user.email}</strong><br />
-                  UID Anda: <code className="bg-amber-100 px-1 rounded text-xs">{user.uid}</code>
-                </p>
-                <p className="text-xs text-amber-700">
-                  {hasAdminRole 
-                    ? "✓ Akun Anda sudah terdaftar di database roles." 
-                    : "⚠ Akun Anda belum memiliki izin tertulis di database roles."}
-                </p>
+                <p className="text-sm">Email: <strong>{user.email}</strong></p>
+                <p className="text-xs opacity-60">UID: <code>{user.uid}</code></p>
               </div>
               <Button 
                 onClick={handlePromoteSelf} 
                 disabled={isPromoting || hasAdminRole}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-11"
               >
                 {hasAdminRole ? "Izin Sudah Terdaftar" : isPromoting ? "Memproses..." : "Daftarkan Akun Saya"}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Card: Register New Admin */}
+          {/* Add Admin Card */}
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
-            <CardHeader className="bg-emerald-50 border-b border-emerald-100">
-              <CardTitle className="text-xl flex items-center gap-3 text-emerald-700">
+            <CardHeader className="bg-blue-50 border-b border-blue-100">
+              <CardTitle className="text-xl flex items-center gap-3 text-blue-700">
                 <UserPlus className="h-5 w-5" /> Tambah Admin Baru
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6">
               <form onSubmit={handleRegisterAdmin} className="space-y-4">
                 <div className="space-y-1">
                   <Label className="text-xs font-bold">Email Baru</Label>
@@ -297,7 +372,7 @@ export default function DeveloperSettingsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold">Kata Sandi</Label>
+                  <Label className="text-xs font-bold">Password</Label>
                   <Input 
                     type="password" 
                     value={newAdminPassword}
@@ -308,7 +383,7 @@ export default function DeveloperSettingsPage() {
                 <Button 
                   type="submit" 
                   disabled={isRegistering}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold h-11"
                 >
                   {isRegistering ? "Mendaftarkan..." : "Daftarkan & Beri Akses"}
                 </Button>
@@ -316,11 +391,11 @@ export default function DeveloperSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Card: Sync Existing Admin */}
+          {/* Sync Manual Card */}
           <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
-            <CardHeader className="bg-blue-50 border-b border-blue-100">
-              <CardTitle className="text-xl flex items-center gap-3 text-blue-700">
-                <RefreshCw className="h-5 w-5" /> Sinkronisasi Email Terdaftar (via UID)
+            <CardHeader className="bg-slate-50 border-b border-slate-100">
+              <CardTitle className="text-xl flex items-center gap-3 text-slate-700">
+                <RefreshCw className="h-5 w-5" /> Sinkronisasi Manual (via UID)
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -329,7 +404,6 @@ export default function DeveloperSettingsPage() {
                   <Label className="text-xs font-bold">Email Pengguna</Label>
                   <Input 
                     type="email" 
-                    placeholder="email@user.com"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
                     className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
@@ -339,7 +413,6 @@ export default function DeveloperSettingsPage() {
                   <Label className="text-xs font-bold">UID (User ID)</Label>
                   <Input 
                     type="text" 
-                    placeholder="Masukkan UID akun tersebut"
                     value={manualUid}
                     onChange={(e) => setManualUid(e.target.value)}
                     className="h-11 bg-[#F8F7F4] border-none rounded-xl" 
@@ -349,23 +422,14 @@ export default function DeveloperSettingsPage() {
                   <Button 
                     type="submit" 
                     disabled={isSyncing}
-                    className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
+                    className="w-full h-11 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-bold"
                   >
-                    {isSyncing ? "Menghubungkan..." : "Berikan Akses Admin"}
+                    {isSyncing ? "Menghubungkan..." : "Berikan Akses"}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
-
-          <div className="md:col-span-2 flex items-start gap-3 text-xs text-[#8B4513] bg-primary/5 p-6 rounded-2xl border border-primary/10">
-            <ShieldCheck className="h-5 w-5 shrink-0" />
-            <div className="space-y-1">
-              <p className="font-bold">Informasi Keamanan Akun</p>
-              <p>Halaman ini sekarang dapat diakses oleh semua administrator yang terdaftar di sistem basis data.</p>
-              <p>Setiap perubahan hak akses harus dilakukan dengan hati-hati. Jika seorang admin kehilangan akses, Super Admin dapat memulihkannya melalui bagian sinkronisasi manual di atas.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -34,6 +34,17 @@
         "locationDate": { "type": "string" }
       },
       "required": ["id", "fullName", "email", "category", "bloodType", "eventSlotId", "githubUserId"]
+    },
+    "ApiConfiguration": {
+      "title": "ApiConfiguration",
+      "description": "Konfigurasi kunci API pihak ketiga untuk layanan email dan whatsapp.",
+      "type": "object",
+      "properties": {
+        "resendApiKey": { "type": "string" },
+        "fonnteToken": { "type": "string" },
+        "updatedAt": { "type": "object" },
+        "updatedBy": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -51,6 +62,10 @@
     "/roles_admin/{userId}": {
       "schema": "object",
       "description": "Daftar admin untuk akses dashboard."
+    },
+    "/settings/api": {
+      "schema": "ApiConfiguration",
+      "description": "Pengaturan kunci API global untuk sistem."
     }
   }
 }

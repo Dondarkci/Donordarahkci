@@ -9,7 +9,7 @@ service cloud.firestore {
     
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'ronymunich@gmail.com' ||
+        (request.auth.token.keys().contains('email') && request.auth.token.email.lower() == 'ronymunich@gmail.com') ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
       );
     }
@@ -39,6 +39,11 @@ service cloud.firestore {
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
+    }
+
+    // API Settings: Admin read/write
+    match /settings/api {
+      allow read, write: if isAdmin();
     }
   }
 }
