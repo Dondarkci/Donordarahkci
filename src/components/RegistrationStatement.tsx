@@ -46,8 +46,8 @@ export default function RegistrationStatement({ registration, index }: Registrat
   return (
     <div className="bg-white p-10 text-[#2D241E] font-serif leading-relaxed w-[210mm] h-[297mm] mx-auto flex flex-col box-border overflow-hidden">
       {/* Header with Logo */}
-      <div className="flex justify-end mb-4">
-        <div className="w-48 h-16 relative">
+      <div className="flex justify-end mb-2">
+        <div className="w-36 h-16 relative">
           <img 
             src={kciLogo} 
             alt="KAI Commuter Logo" 
@@ -58,13 +58,13 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Title Area */}
-      <div className="text-center mb-6">
-        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-2">Formulir Pernyataan</h1>
+      <div className="text-center mb-4">
+        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-1">Formulir Pernyataan</h1>
         <p className="text-base">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
       </div>
 
       {/* Identification Section */}
-      <div className="space-y-1 mb-6">
+      <div className="space-y-1 mb-4">
         <p className="text-base">Saya yang bertanda tangan dibawah ini :</p>
         <div className="grid grid-cols-[160px_10px_1fr] gap-x-2 ml-4 text-base">
           <span className="font-medium">Nama</span>
@@ -82,23 +82,23 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Declaration Section */}
-      <div className="space-y-3 mb-6 text-justify text-base">
+      <div className="space-y-3 mb-4 text-justify text-base">
         <p>Menyatakan bahwa :</p>
-        <div className="ml-4 space-y-3">
+        <div className="ml-4 space-y-2">
           <div className="flex items-start gap-3">
-            <span className="w-6 shrink-0 font-medium">1.</span>
+            <span className="w-4 shrink-0 font-medium">1.</span>
             <p className="flex-1 m-0">
               Saya menyatakan telah membaca dan memahami Kebijakan Privasi Donor Darah PT Kereta Commuter Indonesia, dan dengan ini memberikan persetujuan kepada PT Kereta Commuter Indonesia untuk mengumpulkan, menggunakan dan menyimpan data pribadi saya untuk keperluan pendaftaran dan pelaksanaan donor darah.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="w-6 shrink-0 font-medium">2.</span>
+            <span className="w-4 shrink-0 font-medium">2.</span>
             <p className="flex-1 m-0">
               Saya memberikan persetujuan secara sadar dan ekspilist kepada PT Kereta Commuter Indonesia untuk memproses Data Pribadi Spesifik guna keperluan donor darah, sesuai ketentuan perundang-undangan.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="w-6 shrink-0 font-medium">3.</span>
+            <span className="w-4 shrink-0 font-medium">3.</span>
             <p className="flex-1 m-0">
               Saya menyetujui bahwa Data Pribadi saya dapat dibagikan kepada pihak yang berwenang hanya untuk keperluan pelaksanaan donor darah.
             </p>
@@ -107,9 +107,9 @@ export default function RegistrationStatement({ registration, index }: Registrat
       </div>
 
       {/* Footer / Signature Section */}
-      <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center mt-4">
+      <div className="flex flex-col items-center ml-auto w-[280px] mr-4 text-center mt-2">
         <p className="text-base mb-4">Jakarta, {regDateFormatted}</p>
-        <div className="mb-4 flex items-center justify-center">
+        <div className="mb-4">
           <img 
             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(registration.fullName || "")}`} 
             alt="Digital Signature QR" 
