@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2, Loader2, Key, Send, Smartphone } from "lucide-react";
+import { ArrowLeft, UserPlus, ShieldCheck, UserCheck, RefreshCw, Users, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
@@ -37,24 +37,6 @@ export default function DeveloperSettingsPage() {
 
   // Final check to see if we've determined the user's authority
   const isDeterminingAccess = isUserLoading || (!!user && isAdminCheckLoading);
-
-  // API Settings State
-  const apiSettingsRef = useMemoFirebase(() => {
-    if (!isAuthorized || isDeterminingAccess) return null;
-    return doc(db, "settings", "api");
-  }, [db, isAuthorized, isDeterminingAccess]);
-
-  const { data: apiData, isLoading: isApiLoading } = useDoc(apiSettingsRef);
-  const [resendKey, setResendKey] = useState("");
-  const [fonnteToken, setFonnteToken] = useState("");
-  const [isSavingApi, setIsSavingApi] = useState(false);
-
-  useEffect(() => {
-    if (apiData) {
-      setResendKey(apiData.resendApiKey || "");
-      setFonnteToken(apiData.fonnteToken || "");
-    }
-  }, [apiData]);
 
   // Redirection if unauthorized
   useEffect(() => {
@@ -91,25 +73,6 @@ export default function DeveloperSettingsPage() {
   if (!user || !isAuthorized) {
     return null;
   }
-
-  const handleSaveApi = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!apiSettingsRef) return;
-    setIsSavingApi(true);
-    try {
-      await setDoc(apiSettingsRef, {
-        resendApiKey: resendKey.trim(),
-        fonnteToken: fonnteToken.trim(),
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.email
-      }, { merge: true });
-      toast({ title: "Berhasil", description: "Konfigurasi API telah disimpan." });
-    } catch (error: any) {
-      toast({ title: "Gagal", description: error.message, variant: "destructive" });
-    } finally {
-      setIsSavingApi(false);
-    }
-  };
 
   const handlePromoteSelf = async () => {
     if (!user) return;
@@ -226,7 +189,7 @@ export default function DeveloperSettingsPage() {
 
         <div className="space-y-2">
           <h1 className="text-4xl font-headline font-bold text-[#2D241E]">Manajemen Hak Akses</h1>
-          <p className="text-[#80766E]">Kelola akun administrator dan konfigurasi API eksternal.</p>
+          <p className="text-[#80766E]">Kelola akun administrator dan akses pengembang.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -280,54 +243,6 @@ export default function DeveloperSettingsPage() {
                   })}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-
-          {/* API Configuration Card */}
-          <Card className="border-none shadow-sm rounded-3xl overflow-hidden bg-white md:col-span-2">
-            <CardHeader className="bg-amber-50 border-b border-amber-100">
-              <CardTitle className="text-xl flex items-center gap-3 text-amber-700">
-                <Key className="h-5 w-5" /> Konfigurasi Layanan API
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={handleSaveApi} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold flex items-center gap-2">
-                      <Send className="h-3 w-3" /> Resend API Key (Email)
-                    </Label>
-                    <Input 
-                      type="password" 
-                      placeholder="re_..."
-                      value={resendKey}
-                      onChange={(e) => setResendKey(e.target.value)}
-                      className="h-11 bg-[#F8F7F4] border-none rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold flex items-center gap-2">
-                      <Smartphone className="h-3 w-3" /> Fonnte Token (WhatsApp)
-                    </Label>
-                    <Input 
-                      type="password" 
-                      placeholder="token..."
-                      value={fonnteToken}
-                      onChange={(e) => setFonnteToken(e.target.value)}
-                      className="h-11 bg-[#F8F7F4] border-none rounded-xl"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-2">
-                  <Button 
-                    type="submit" 
-                    disabled={isSavingApi || isApiLoading}
-                    className="bg-amber-600 hover:bg-amber-700 text-white px-8 rounded-xl font-bold h-11"
-                  >
-                    {isSavingApi ? "Menyimpan..." : "Simpan Konfigurasi API"}
-                  </Button>
-                </div>
-              </form>
             </CardContent>
           </Card>
 
