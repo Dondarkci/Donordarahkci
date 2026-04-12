@@ -20,7 +20,7 @@ function toRoman(num: number): string {
 }
 
 export default function RegistrationStatement({ registration, index }: RegistrationStatementProps) {
-  const kciLogo = PlaceHolderImages.find(img => img.id === "logo-kci")?.imageUrl || "/logokci.png";
+  const kciLogo = "/logokci.png";
 
   // Parse event date for the reference number (Roman Month / Full Year)
   let mmRoman = "00";
@@ -59,7 +59,7 @@ export default function RegistrationStatement({ registration, index }: Registrat
 
       {/* Title Area */}
       <div className="text-center mb-4">
-        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-1">Formulir Pernyataan</h1>
+        <h1 className="text-xl font-bold underline uppercase tracking-wide mb-2">Formulir Pernyataan</h1>
         <p className="text-base">No. {index}/dondarkci/{mmRoman}/{yyyy}</p>
       </div>
 

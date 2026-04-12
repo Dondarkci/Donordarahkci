@@ -337,6 +337,32 @@ export default function AdminPage() {
     html2pdf().set(opt).from(element).save();
   };
 
+  // Logic to calculate monthly index (resets to 1 each month)
+  const getMonthlyIndex = (reg: Registration) => {
+    if (!reg.locationDate || !registrations) return 0;
+    try {
+      const eventDate = parseISO(reg.locationDate);
+      const monthYearKey = format(eventDate, "yyyy-MM");
+      
+      // Filter all registrations that share the same event month/year
+      const monthlyItems = registrations
+        .filter(r => {
+          if (!r.locationDate) return false;
+          try {
+            const rDate = parseISO(r.locationDate);
+            return format(rDate, "yyyy-MM") === monthYearKey;
+          } catch { return false; }
+        })
+        // Sort chronologically by registration date
+        .sort((a, b) => (a.registrationDate?.seconds || 0) - (b.registrationDate?.seconds || 0));
+      
+      const index = monthlyItems.findIndex(item => item.id === reg.id);
+      return index + 1;
+    } catch (e) {
+      return 0;
+    }
+  };
+
   const filteredData = (registrations || [])
     .filter(r => {
       const matchesSearch = r.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -607,9 +633,8 @@ export default function AdminPage() {
                 ) : paginatedData.length === 0 ? (
                   <TableRow><TableCell colSpan={10} className="text-center py-20 italic">Belum ada data pendaftar.</TableCell></TableRow>
                 ) : (
-                  paginatedData.map((reg, idx) => {
-                    // Overall index in filtered data
-                    const globalIndex = filteredData.length - ((currentPage - 1) * ITEMS_PER_PAGE + idx);
+                  paginatedData.map((reg) => {
+                    const monthlyIndex = getMonthlyIndex(reg);
                     
                     return (
                       <TableRow key={reg.id}>
@@ -686,7 +711,7 @@ export default function AdminPage() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => setViewingStatement({ reg, index: globalIndex })}
+                            onClick={() => setViewingStatement({ reg, index: monthlyIndex })}
                             className="text-[#80766E] hover:text-primary hover:bg-primary/5 rounded-full h-8 w-8 p-0"
                             title="Lihat Form"
                           >
