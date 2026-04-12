@@ -243,7 +243,7 @@ export default function AdminPage() {
     setEditRegName(reg.fullName);
     setEditRegEmail(reg.email);
     setEditRegUnit(reg.unitKerja || "");
-    const idNum = (reg.category === "Pegawai KCI" || reg.category === "Internal") ? (reg.nipp || reg.nik || "") : (reg.nik || reg.nipp || "");
+    const idNum = (reg.category === "Pegawai KCI" || reg.category === "Internal") ? (reg.nipp || reg.nik || "") : (reg.nik || r.nipp || "");
     setEditRegIdNumber(idNum);
     setEditRegSlotId(reg.eventSlotId);
   };
@@ -396,6 +396,9 @@ export default function AdminPage() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  // Calculate total registrations on all active seed locations
+  const totalActiveSeedRegistrations = locations?.reduce((sum, loc) => sum + (loc.currentRegistrations || 0), 0) || 0;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -605,8 +608,14 @@ export default function AdminPage() {
                 </PopoverContent>
               </Popover>
 
-              <div className="bg-white border border-[#E5E7EB] rounded-full px-6 py-2.5 shadow-sm h-14 flex items-center">
-                <span className="font-bold text-base text-[#2D241E]">Total: {filteredData.length} Orang</span>
+              {/* Badges Container */}
+              <div className="flex items-center gap-2">
+                <div className="bg-emerald-50 border border-emerald-100 rounded-full px-6 py-2.5 shadow-sm h-14 flex items-center">
+                  <span className="font-bold text-base text-emerald-700 whitespace-nowrap">Seed Aktif: {totalActiveSeedRegistrations} Orang</span>
+                </div>
+                <div className="bg-white border border-[#E5E7EB] rounded-full px-6 py-2.5 shadow-sm h-14 flex items-center">
+                  <span className="font-bold text-base text-[#2D241E] whitespace-nowrap">Total: {filteredData.length} Orang</span>
+                </div>
               </div>
             </div>
           </div>
